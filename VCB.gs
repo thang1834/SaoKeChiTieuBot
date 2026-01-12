@@ -36,8 +36,8 @@ function getVcbCaptcha() {
 function loginVCB(captchaText, captchaObj) {
   loadLibraries(); // Ensure Crypto loaded
   
-  var user = CONFIG.USER;
-  var pwd = CONFIG.PASS;
+  var user = CONFIG.VCB_USER;
+  var pwd = CONFIG.VCB_PASS;
   
   // 1. Generate CLIENT RSA Keypair (1024-bit) 
   // The Python repo sends clientPubKey in the payload.
@@ -97,8 +97,8 @@ function loginVCB(captchaText, captchaObj) {
 function getVcbHistory(sessionId) {
   loadLibraries();
   
-  var user = CONFIG.USER;
-  var account = CONFIG.STK;
+  var user = CONFIG.VCB_USER;
+  var account = CONFIG.VCB_ACC;
   var today = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy");
   
   // Generate CLIENT RSA Keypair for this request too
