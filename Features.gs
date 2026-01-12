@@ -450,6 +450,136 @@ function executeDelete(cid, sheetId, telegramId) {
   sendText(cid, t('deleted', telegramId));
 }
 
+// --- INCOME MANAGEMENT (similar to Expense, but protect Donate) ---
+function searchIncome(cid, sheetId, keyword, telegramId) { 
+  var d = getOrCreateSheetForUser(sheetId, 'Income').getDataRange().getValues();
+  var msg = "", total = 0;
+  var k = sanitizeInput(keyword).toLowerCase();
+  
+  for (var i = 1; i < d.length; i++) { 
+    if (String(d[i]).toLowerCase().includes(k)) { 
+      var isDonate = (d[i][3] || "").toLowerCase() === "donate";
+      msg += (isDonate ? "🔒 " : "• ") + d[i][3] + ": " + formatMoney(d[i][2]) + " (" + d[i][4] + ")\n"; 
+      total += Number(d[i][2]); 
+    } 
+  }
+  sendText(cid, "🔍 **Tìm kiếm thu nhập:**\n" + (msg || t('not_found', telegramId)) + "\nTotal: " + formatMoney(total) + "\n\n🔒 = Donate (không thể xóa)");
+}
+
+function deleteIncomeById(cid, sheetId, id, telegramId) {
+  var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+  var rid = parseInt(id);
+  
+  if (!rid || rid > sheet.getLastRow() || rid < 2) {
+    sendText(cid, "❌ ID không hợp lệ.");
+    return;
+  }
+  
+  // Check if it's a Donate
+  var row = sheet.getRange(rid, 1, 1, 5).getValues()[0];
+  if ((row[3] || "").toLowerCase() === "donate") {
+    sendText(cid, "🔒 Không thể xóa thu nhập loại **Donate**!");
+    return;
+  }
+  
+  sheet.deleteRow(rid);
+  sendText(cid, t('deleted', telegramId));
+}
+
+function askUndoIncomeConfirmation(cid, sheetId, telegramId) {
+  var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) { sendText(cid, t('no_data', telegramId)); return; }
+  
+  var r = sheet.getRange(lastRow, 1, 1, 5).getValues()[0];
+  
+  // Check if it's Donate
+  if ((r[3] || "").toLowerCase() === "donate") {
+    sendText(cid, "🔒 Thu nhập cuối là **Donate** - không thể xóa!\nDùng `/deletein [ID]` để xóa mục khác.");
+    return;
+  }
+  
+  if ((new Date() - new Date(r[1])) / 60000 > 5) { 
+    sendText(cid, "⏳ > 5 phút. Dùng `/deletein [ID]`"); 
+    return; 
+  }
+  
+  var kb = { inline_keyboard: [[{text: "✅ Yes", callback_data: "confirm_undo_income"}, {text: "❌ No", callback_data: "cancel_undo"}]]};
+  sendMessageKb(cid, "🗑 Xác nhận xóa thu nhập cuối?\n💰 " + formatMoney(r[2]) + " | " + r[3] + " | " + r[4], kb);
+}
+
+function executeDeleteIncome(cid, sheetId, telegramId) {
+  var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+  var lastRow = sheet.getLastRow();
+  
+  // Double-check Donate protection
+  var r = sheet.getRange(lastRow, 1, 1, 5).getValues()[0];
+  if ((r[3] || "").toLowerCase() === "donate") {
+    sendText(cid, "🔒 Không thể xóa **Donate**!");
+    return;
+  }
+  
+  sheet.deleteRow(lastRow);
+  sendText(cid, t('deleted', telegramId));
+}
+
+function listIncome(cid, sheetId, page, msgId, month, year, telegramId) {
+  try {
+    var pageSize = CONFIG.PAGE_SIZE;
+    var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+    var data = sheet.getDataRange().getValues();
+    
+    var now = new Date();
+    var m = month ? parseInt(month) : now.getMonth() + 1;
+    var y = year ? parseInt(year) : now.getFullYear();
+    
+    var filtered = [];
+    for (var i = 1; i < data.length; i++) {
+      var date = new Date(data[i][1]);
+      if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+        filtered.push(data[i]);
+      }
+    }
+    
+    if (filtered.length === 0) {
+      sendText(cid, t('no_data', telegramId));
+      return;
+    }
+    
+    var totalPages = Math.ceil(filtered.length / pageSize);
+    page = Math.max(1, Math.min(page, totalPages));
+    var start = (page - 1) * pageSize;
+    var end = Math.min(start + pageSize, filtered.length);
+    
+    var msg = "💰 **Thu nhập tháng " + m + "/" + y + "**\n\n";
+    
+    for (var i = start; i < end; i++) {
+      var r = filtered[i];
+      var d = new Date(r[1]);
+      var isDonate = (r[3] || "").toLowerCase() === "donate";
+      msg += (isDonate ? "🔒" : "#" + r[0]) + " | " + d.getDate() + "/" + (d.getMonth()+1) + " | " + formatMoney(r[2]) + " | " + r[3] + " | " + r[4] + "\n";
+    }
+    
+    msg += "\n📄 Trang " + page + "/" + totalPages;
+    msg += "\n🔒 = Donate (không thể xóa)";
+    
+    var kb = [];
+    var navRow = [];
+    if (page > 1) navRow.push({text: "⬅️ Trước", callback_data: "pagein|" + (page-1) + "|" + m + "|" + y});
+    if (page < totalPages) navRow.push({text: "Sau ➡️", callback_data: "pagein|" + (page+1) + "|" + m + "|" + y});
+    if (navRow.length > 0) kb.push(navRow);
+    
+    if (msgId) {
+      editMessage(cid, msgId, msg);
+    } else {
+      sendMessageKb(cid, msg, {inline_keyboard: kb});
+    }
+  } catch (e) {
+    Logger.log("List Income Error: " + e);
+    sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
 // --- CUSTOM CATEGORIES ---
 function getCategories(sheetId, type) {
   // type: 'expense' or 'income'

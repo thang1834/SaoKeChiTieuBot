@@ -33,7 +33,12 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ### 💰 Thu Nhập
 ```
 /in 10m lương             → Nhập thu nhập
+/listin                   → Danh sách thu nhập
+/undoin                   → Xóa thu nhập cuối
+/deletein 5               → Xóa thu nhập ID #5
+/searchin lương           → Tìm kiếm thu nhập
 ```
+> 🔒 **Donate** không thể xóa
 
 ### 📊 Báo Cáo
 ```

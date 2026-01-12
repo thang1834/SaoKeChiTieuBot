@@ -51,6 +51,12 @@
 | Lệnh | Mô tả |
 |------|-------|
 | `/in [số] [ghi chú]` | Nhập thu nhập (VD: `/in 10m lương`) |
+| `/listin` | Danh sách thu nhập (phân trang) |
+| `/undoin` | Xóa thu nhập cuối |
+| `/deletein [ID]` | Xóa thu nhập theo ID |
+| `/searchin [từ khóa]` | Tìm kiếm thu nhập |
+
+> 🔒 **Donate** không thể xóa bằng bất kỳ cách nào
 
 ### 📊 Báo Cáo
 | Lệnh | Mô tả |

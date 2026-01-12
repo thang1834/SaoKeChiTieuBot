@@ -99,6 +99,24 @@ function handleMessage(text, senderId, senderName) {
     handleIncomeCommand(senderId, userSheetId, text.replace("/in ", ""), senderId); 
     return; 
   }
+  // Income management
+  if (text.startsWith("/listin")) { 
+    var d = parseDateArg(text.replace("/listin", "").trim());
+    listIncome(senderId, userSheetId, 1, null, d.month, d.year, senderId);
+    return; 
+  }
+  if (text === "/undoin") { 
+    askUndoIncomeConfirmation(senderId, userSheetId, senderId); 
+    return; 
+  }
+  if (text.startsWith("/deletein ")) { 
+    deleteIncomeById(senderId, userSheetId, text.replace("/deletein ", ""), senderId); 
+    return; 
+  }
+  if (text.startsWith("/searchin ")) { 
+    searchIncome(senderId, userSheetId, text.replace("/searchin ", ""), senderId); 
+    return; 
+  }
   if (text.startsWith("/remind ")) { 
     setupReminder(senderId, text.replace("/remind ", ""), senderId); 
     return; 
@@ -153,11 +171,16 @@ function handleCallbackQuery(cb) {
     handleSaveIncome(senderId, userSheetId, cb, senderId);
   } else if (data === "confirm_undo") {
     executeDelete(senderId, userSheetId, senderId);
+  } else if (data === "confirm_undo_income") {
+    executeDeleteIncome(senderId, userSheetId, senderId);
   } else if (data === "cancel_undo") {
     editMessage(senderId, msgId, t('cancel_undo', senderId));
   } else if (data === "back_to_filter") {
     var userSheetId2 = getUserSheetId(senderId);
     sendFilterButtonsCustom(senderId, userSheetId2, senderId);
+  } else if (data.startsWith("pagein|")) {
+    var pin = data.split("|");
+    listIncome(senderId, userSheetId, parseInt(pin[1]), msgId, pin[2], pin[3], senderId);
   } else {
     handleSaveExpense(senderId, userSheetId, cb, senderId);
   }

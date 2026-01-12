@@ -1,112 +1,146 @@
 # 🛠 Hướng Dẫn Tự Host (Self-Hosting) SaoKeChiTieuBot
 
-Bạn muốn tự chạy con bot này trên tài khoản Google của chính mình để hoàn toàn kiểm soát dữ liệu? Hãy làm theo các bước dưới đây. Hoan toàn miễn phí nhờ Google Apps Script!
+Bạn muốn tự chạy bot trên tài khoản Google của mình? Miễn phí 100% với Google Apps Script!
 
 ---
 
 ## 📋 Yêu Cầu
-1.  Tài khoản Google (Gmail).
-2.  Tài khoản Telegram.
-3.  Một chút kiên nhẫn (khoảng 10-15 phút).
+1. Tài khoản Google (Gmail)
+2. Tài khoản Telegram
+3. ~15 phút thiết lập
 
 ---
 
-## 🚀 Bước 1: Lấy Token từ BotFather
+## 🚀 Bước 1: Tạo Bot Telegram
 
-1.  Mở Telegram, chat với **[@BotFather](https://t.me/BotFather)**.
-2.  Gõ `/newbot` để tạo bot mới.
-3.  Đặt tên hiển thị (Name) và tên định danh (Username, phải kết thúc bằng `bot`).
-4.  **BotFather** sẽ đưa cho bạn một **API Token** (dạng `123456:ABC-DEF...`).
-    *   👉 **Lưu lại Token này, tuyệt đối không chia sẻ cho ai!**
+1. Chat với **[@BotFather](https://t.me/BotFather)**
+2. Gõ `/newbot` → Đặt tên → Nhận **API Token**
+3. 👉 **Lưu Token này!**
 
 ---
 
 ## ⚙️ Bước 2: Thiết Lập Google Apps Script
 
-1.  Truy cập [script.google.com](https://script.google.com).
-2.  Bấm **"Dự án mới" (New Project)**.
-3.  Copy toàn bộ nội dung file [`App.gs`](./App.gs) trong repository này và dán vào trình soạn thảo code (thay thế nội dung cũ).
-4.  Lưu lại (Ctrl + S), đặt tên dự án là `SaoKeChiTieuBot`.
+1. Truy cập [script.google.com](https://script.google.com) → **New Project**
+2. Copy **TẤT CẢ** các file sau vào project:
+
+| File | Mô tả |
+|------|-------|
+| `Config.gs` | Cấu hình, localization |
+| `Utils.gs` | Telegram API, helpers |
+| `Features.gs` | Report, Budget, Categories |
+| `Handlers.gs` | Message/callback handlers |
+| `App.gs` | VCB automation |
+| `VCB.gs` | VCB API integration |
+| `Lib.gs` | Crypto utilities |
+
+3. Lưu (Ctrl+S), đặt tên `SaoKeChiTieuBot`
 
 ---
 
-## 🔑 Bước 3: Cấu Hình Biến Môi Trường (Script Properties)
+## 🔑 Bước 3: Cấu Hình Script Properties
 
-Thay vì điền cứng Token vào code (không an toàn), chúng ta sẽ dùng **Script Properties**:
+1. Vào **Project Settings** (⚙️) → **Script Properties**
+2. Thêm các thuộc tính:
 
-1.  Trong giao diện Apps Script, nhìn sang thanh bên trái, chọn **Cài đặt dự án (Project Settings)** (biểu tượng bánh răng ⚙️).
-2.  Kéo xuống phần **Thuộc tính tập lệnh (Script Properties)**.
-3.  Bấm **Thêm thuộc tính (Add script property)** và thêm lần lượt các dòng sau:
+| Property | Value | Mô tả |
+|----------|-------|-------|
+| `BOT_TOKEN` | `123456:ABC...` | Token từ BotFather |
+| `MY_CHAT_ID` | `12345678` | ID admin (chat @userinfobot) |
+| `SHEET_ID` | `xxx` | Master Sheet ID |
+| `BOT_EMAIL` | `email@gmail.com` | Email nhận share từ users |
 
-| Thuộc tính (Property) | Giá trị (Value) | Mô tả |
-| :--- | :--- | :--- |
-| `BOT_TOKEN` | `123456:ABC-DEF...` | Token bạn vừa lấy từ BotFather |
-| `MY_CHAT_ID` | `12345678` | ID Telegram của bạn (để làm Admin). Chat với `@userinfobot` để lấy ID. |
-| `SHEET_ID` | `...` | (Tạm thời để trống hoặc tạo một Sheet mới rồi điền ID vào đây làm Database Master) |
-| `LANG` | `vi` | (Tùy chọn) `vi` cho tiếng Việt, `en` cho tiếng Anh |
-| `VCB_USER` | `09xxxxxxxxx` | (VCB) Số điện thoại đăng nhập VCB DigiBank |
-| `VCB_PASS` | `password` | (VCB) Mật khẩu VCB DigiBank |
-| `VCB_ACC` | `9999999999` | (VCB) Số tài khoản ngân hàng |
+### 🏦 VCB Integration (Tùy chọn)
+| Property | Value |
+|----------|-------|
+| `VCB_USER` | Số điện thoại VCB |
+| `VCB_PASS` | Mật khẩu VCB |
+| `VCB_ACC` | Số tài khoản |
 
-**Lưu ý về `SHEET_ID`**: Đây là Sheet chủ (Database Master) dùng để lưu danh sách người dùng (Users).
-*   Hãy tạo một Google Sheet mới.
-*   Copy ID trên URL (đoạn giữa `/d/` và `/edit`).
-*   Điền vào thuộc tính `SHEET_ID`.
-
-**🏦 Lưu ý về VCB Integration** (Tùy chọn):
-*   Nếu bạn muốn sử dụng tính năng theo dõi biến động VCB, cần thêm 3 thuộc tính VCB ở trên.
-*   Cập nhật `browserId` trong file `VCB.gs` (hàm `getBrowserId()`).
-*   Lấy browserId từ: https://netrotion.github.io/VCB-BrowserID/ (mở trên trình duyệt đã đăng nhập VCB).
-*   Xem thêm: [VCB-API Repository](https://github.com/netrotion/VCB-API)
+> Cần lấy `browserId` từ: https://netrotion.github.io/VCB-BrowserID/
 
 ---
 
 ## 🌐 Bước 4: Deploy Web App
 
-Để Telegram có thể gửi tin nhắn đến bot, bạn cần public script này thành Web App.
-
-1.  Bấm nút **Triển khai (Deploy)** (màu xanh góc phải trên) -> **Tùy chọn triển khai mới (New deployment)**.
-2.  Chọn loại: **Ứng dụng web (Web app)**.
-3.  Điền thông tin:
-    *   **Mô tả**: Bot v1.
-    *   **Thực thi dưới dạng (Execute as)**: **Tôi (Me)** (Quan trọng!).
-    *   **Ai có quyền truy cập (Who has access)**: **Bất kỳ ai (Anyone)** (Bắt buộc để Telegram gọi được API).
-4.  Bấm **Triển khai (Deploy)**.
-5.  Google sẽ yêu cầu cấp quyền (Authorize access) -> Chọn tài khoản -> Advanced -> Go to ... (unsafe) -> Allow.
-6.  Copy **Web App URL** (dạng `https://script.google.com/macros/s/.../exec`).
+1. **Deploy** → **New deployment**
+2. Loại: **Web app**
+3. Cấu hình:
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+4. Deploy → Copy **Web App URL**
 
 ---
 
 ## 🔗 Bước 5: Kết Nối Webhook
 
-Bước cuối cùng là bảo Telegram biết: "Khi có người nhắn tin, hãy gửi dữ liệu đến Web App URL kia".
+Mở trình duyệt, dán:
+```
+https://api.telegram.org/bot[BOT_TOKEN]/setWebhook?url=[WEB_APP_URL]
+```
 
-1.  Mở trình duyệt web, dán đường link sau (thay thế các phần trong ngoặc):
-    ```
-    https://api.telegram.org/bot[BOT_TOKEN]/setWebhook?url=[WEB_APP_URL]
-    ```
-    *   Thay `[BOT_TOKEN]` bằng token của bạn.
-    *   Thay `[WEB_APP_URL]` bằng URL bạn vừa copy ở Bước 4.
-2.  Nhấn Enter. Nếu thấy hiện `{"ok":true, "result":true, "description":"Webhook was set"}` là THÀNH CÔNG! 🎉
+Thành công khi thấy: `{"ok":true}`
 
 ---
 
-## 📝 Bước 6: Cài Đặt Menu Lệnh (Tùy chọn)
+## 📝 Bước 6: Chạy Setup Functions
 
-Để bot hiện menu lệnh xịn xò:
+Trong Apps Script, chạy **từng hàm** một lần:
 
-1.  Quay lại Apps Script.
-2.  Tìm hàm `setupCommands()` trong code.
-3.  Chạy hàm này thủ công một lần bằng cách:
-    *   Chọn `setupCommands` trên thanh công cụ (cạnh nút Debug/Run).
-    *   Bấm **Chạy (Run)**.
+```javascript
+setupWebhook()              // Kết nối webhook
+setupCommands()             // Tạo menu lệnh Telegram
+setupHourlyReminderTrigger() // Trigger nhắc nhở
+setupDailyRecurringTrigger() // Trigger chi tiêu định kỳ
+setupVCBTrigger()           // (VCB) Check balance mỗi 10 phút
+```
+
+**Cách chạy:**
+1. Chọn tên hàm trên dropdown
+2. Bấm **Run**
+3. Cấp quyền nếu được yêu cầu
 
 ---
 
-## ✅ Hoàn Tất
+## 📊 Cấu Trúc Master Sheet
 
-Bây giờ bạn có thể chat với bot của riêng mình!
-*   Gõ `/start` để bắt đầu.
-*   Gõ `/connect [Sheet_ID_Của_Bạn]` để kết nối dữ liệu.
+Tạo Google Sheet mới làm Master DB với các sheet:
 
-Chúc bạn thành công! 🚀
+| Sheet | Cột |
+|-------|-----|
+| `Users` | TelegramID, SheetID, Name, JoinedDate, Language, ReminderTime |
+
+> Bot sẽ tự tạo sheet này khi có user đầu tiên kết nối.
+
+---
+
+## ✅ Hoàn Tất!
+
+1. Chat với bot → `/start`
+2. Tạo Google Sheet riêng
+3. Share **Editor** cho `BOT_EMAIL`
+4. Gõ `/connect [Sheet_ID]`
+
+---
+
+## 🔧 Troubleshooting
+
+### Bot không phản hồi
+- Kiểm tra `BOT_TOKEN` đúng chưa
+- Webhook đã set chưa? Chạy `setupWebhook()`
+- Deploy mới nhất chưa? Re-deploy nếu thay đổi code
+
+### Lỗi "Cannot access Sheet"
+- User đã share **Editor** chưa?
+- `SHEET_ID` (master) đúng chưa?
+
+### VCB không hoạt động
+- Đã cập nhật `browserId` chưa?
+- Captcha API còn hoạt động không?
+- Xem Log: **View** → **Logs**
+
+---
+
+## 📄 License
+
+MIT License - Free to use and modify!
