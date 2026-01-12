@@ -12,27 +12,89 @@
 
 ### 💸 Chi Tiêu & Thu Nhập
 - **Nhập nhanh**: `50k cafe`, `200k tiền điện`, `/in 10m lương`
-- **Hạng mục tùy chỉnh**: `/category add [tên]`
-- **Chi tiêu định kỳ**: `/recurring add 2m tiền nhà monthly 1`
+- **Hạng mục tùy chỉnh**: Tự định nghĩa categories
+- **Chi tiêu định kỳ**: Auto-add tiền nhà, Netflix...
 
 ### 📊 Báo Cáo
-- **Biểu đồ Doughnut**: `/report` - Phân tích chi tiêu theo %
-- **Danh sách phân trang**: `/list`, `/filter`
-- **Xuất CSV**: `/export`
+- **Biểu đồ Doughnut**: Phân tích chi tiêu theo %
+- **Danh sách phân trang**: Dễ dàng duyệt lịch sử
+- **Xuất CSV**: Backup dữ liệu
 
 ### 🎯 Quản Lý Ngân Sách
-- Đặt ngân sách tổng/theo hạng mục: `/budget 5m`, `/budget 2m ăn uống`
-- **Cảnh báo real-time** khi vượt ngân sách
-
-### ⚙️ Tiện Ích
-- 🌐 Đa ngôn ngữ (VI/EN)
-- ⏰ Nhắc nhở hàng ngày
-- 🔍 Tìm kiếm, xóa, undo
+- Đặt hạn mức tổng/theo hạng mục
+- **Cảnh báo real-time** khi vượt 90% hoặc 100%
 
 ### 🏦 VCB Integration
-- Tự động theo dõi biến động số dư Vietcombank
+- Tự động theo dõi biến động số dư
 - Thông báo donate qua Telegram
 - Mã hóa AES-256 + RSA
+
+---
+
+## 🚀 Tất Cả Lệnh
+
+### 📌 Kết Nối
+| Lệnh | Mô tả |
+|------|-------|
+| `/connect [SheetID]` | Kết nối Google Sheet của bạn |
+| `/help` | Xem hướng dẫn sử dụng |
+
+### 💸 Chi Tiêu
+| Lệnh | Mô tả |
+|------|-------|
+| `50k cafe` | Nhập chi tiêu (Bot hỏi chọn hạng mục) |
+| `/undo` | Xóa giao dịch cuối cùng |
+| `/delete [ID]` | Xóa giao dịch theo ID |
+| `/search [từ khóa]` | Tìm kiếm giao dịch |
+
+### 💰 Thu Nhập
+| Lệnh | Mô tả |
+|------|-------|
+| `/in [số] [ghi chú]` | Nhập thu nhập (VD: `/in 10m lương`) |
+
+### 📊 Báo Cáo
+| Lệnh | Mô tả |
+|------|-------|
+| `/report` | Báo cáo tháng này (có biểu đồ) |
+| `/report 12/2025` | Báo cáo tháng cụ thể |
+| `/list` | Danh sách giao dịch (phân trang) |
+| `/list 12/2025` | Danh sách tháng cụ thể |
+| `/filter` | Lọc theo hạng mục |
+| `/export` | Xuất file CSV (Chi/Thu/Cả hai) |
+
+### 🎯 Ngân Sách
+| Lệnh | Mô tả |
+|------|-------|
+| `/budget` | Xem ngân sách hiện tại |
+| `/budget 10m` | Đặt tổng ngân sách tháng |
+| `/budget 2m ăn uống` | Đặt ngân sách theo hạng mục |
+
+### 📂 Hạng Mục Tùy Chỉnh
+| Lệnh | Mô tả |
+|------|-------|
+| `/category` | Xem danh sách hạng mục |
+| `/category add [tên]` | Thêm hạng mục chi tiêu |
+| `/category del [tên]` | Xóa hạng mục |
+| `/category income add [tên]` | Thêm hạng mục thu nhập |
+
+### 🔄 Chi Tiêu Định Kỳ
+| Lệnh | Mô tả |
+|------|-------|
+| `/recurring` | Xem danh sách chi định kỳ |
+| `/recurring add 2m tiền nhà monthly 1` | Thêm (monthly/weekly, ngày) |
+| `/recurring del [ID]` | Xóa chi tiêu định kỳ |
+
+### ⏰ Nhắc Nhở
+| Lệnh | Mô tả |
+|------|-------|
+| `/remind 21:00` | Đặt nhắc nhở hàng ngày |
+| `/stopremind` | Tắt nhắc nhở |
+
+### ⚙️ Cài Đặt
+| Lệnh | Mô tả |
+|------|-------|
+| `/lang` | Đổi ngôn ngữ (VI/EN) |
+| `/donate` | Ủng hộ tác giả (QR VietQR) |
 
 ---
 
@@ -45,47 +107,28 @@
 ├── Handlers.gs    # Message/callback handlers, reminders
 ├── VCB.gs         # VCB API integration
 ├── Lib.gs         # Crypto utilities
-└── App.gs         # Legacy (giữ cho VCB scheduler)
+└── App.gs         # VCB scheduler
 ```
-
----
-
-## 🚀 Lệnh Có Sẵn
-
-| Lệnh | Mô tả |
-|------|-------|
-| `/connect [ID]` | Kết nối Google Sheet |
-| `/report` | Báo cáo chi tiêu (có biểu đồ) |
-| `/list` | Danh sách giao dịch |
-| `/filter` | Lọc theo hạng mục |
-| `/in [số] [ghi chú]` | Nhập thu nhập |
-| `/budget` | Xem/đặt ngân sách |
-| `/category` | Quản lý hạng mục tùy chỉnh |
-| `/recurring` | Quản lý chi tiêu định kỳ |
-| `/export` | Xuất file CSV |
-| `/remind` | Đặt nhắc nhở |
-| `/lang` | Đổi ngôn ngữ |
-| `/donate` | Ủng hộ tác giả |
 
 ---
 
 ## 🛠 Cài Đặt
 
 ### Cho Người Dùng
-1. Mở Telegram, chat với `@SaoKeChiTieu_Bot`
-2. Tạo Google Sheet, share **Editor** cho `ducthang01052002@gmail.com`
+1. Mở Telegram → Chat với `@SaoKeChiTieu_Bot`
+2. Tạo Google Sheet → Share **Editor** cho `ducthang01052002@gmail.com`
 3. Gõ `/connect [Sheet_ID]`
 
-👉 **[Chi tiết: GUIDE.md](./GUIDE.md)**
+👉 **[Hướng dẫn chi tiết: GUIDE.md](./GUIDE.md)**
 
 ### Tự Host
-👉 **[Chi tiết: SELF_HOSTING.md](./SELF_HOSTING.md)**
+👉 **[Hướng dẫn tự host: SELF_HOSTING.md](./SELF_HOSTING.md)**
 
 ---
 
 ## 🗺 Roadmap
 
-- [ ] AI Integration (Gemini)
+- [ ] AI Integration (Google Gemini)
 - [ ] Web Dashboard
 
 ---
