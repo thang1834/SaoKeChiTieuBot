@@ -94,6 +94,56 @@ function loginVCB(captchaText, captchaObj) {
   return null;
 }
 
+/**
+ * Get list of accounts via CIF - REQUIRED before querying transaction history!
+ * VCB requires this step to activate the account in the session.
+ */
+function getListAccountViaCif(sessionId) {
+  loadLibraries();
+  
+  var user = CONFIG.VCB_USER;
+  var clientKeys = generateClientRsaKeypair();
+  
+  var rawPayload = {
+    "mid": 8,
+    "user": user,
+    "sessionId": sessionId,
+    "browserId": getBrowserId(),
+    "clientPubKey": clientKeys.publicKeyBase64,
+    "lang": "vi"
+  };
+  
+  var state = encryptRequest(rawPayload);
+  
+  var headers = getCommonHeaders();
+  headers['X-Lim-Id'] = hashLimId(user);
+  headers['X-Request-Id'] = generateRequestId();
+  headers['SessionId'] = sessionId;
+  
+  var options = {
+    method: 'post',
+    headers: headers,
+    payload: JSON.stringify(state.payload),
+    muteHttpExceptions: true
+  };
+  
+  var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v2/get-list-account-via-cif", options);
+  var txt = res.getContentText();
+  Logger.log("Get Account List: " + txt.substring(0, 200) + "...");
+  
+  try {
+    var json = JSON.parse(txt);
+    if (json.d && json.k) {
+      var decrypted = decryptResponseWithClientKey(json, clientKeys.privateKeyPem);
+      Logger.log("Account List Decrypted: " + JSON.stringify(decrypted).substring(0, 300));
+      return decrypted;
+    }
+  } catch(e) {
+    Logger.log("Get Account List Error: " + e);
+  }
+  return null;
+}
+
 function getVcbHistory(sessionId) {
   loadLibraries();
   
@@ -141,8 +191,8 @@ function getVcbHistory(sessionId) {
     muteHttpExceptions: true
   };
   
-  // Try v2 endpoint first
-  var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v2/transaction-history", options);
+  // Use v1 endpoint (v2 returns System busy)
+  var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v1/transaction-history", options);
   var txt = res.getContentText();
   Logger.log("History Raw Response: " + txt.substring(0, 200) + "...");
   

@@ -49,10 +49,13 @@ function runCheckBalance() {
       if (sessionId) {
         Logger.log("✅ Login Success, SessionID: " + sessionId.substring(0, 10) + "...");
         
-        // 4. Get History
+        // 4. Get Account List (REQUIRED to activate account in session)
+        getListAccountViaCif(sessionId);
+        
+        // 5. Get History
         var txns = getVcbHistory(sessionId);
         
-        // 5. Process
+        // 6. Process
         if (txns && txns.length > 0) {
           processDonations(txns);
         } else {
