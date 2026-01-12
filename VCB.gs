@@ -39,6 +39,8 @@ function loginVCB(captchaText, captchaObj) {
   var user = CONFIG.VCB_USER;
   var pwd = CONFIG.VCB_PASS;
   
+  Logger.log("VCB User: '" + user + "'"); // Debug undefined user
+  
   // 1. Generate CLIENT RSA Keypair (1024-bit) 
   // The Python repo sends clientPubKey in the payload.
   // Server encrypts response `k` with this clientPubKey.
@@ -445,32 +447,31 @@ function getStaticToken() {
 // --- HEADER ALGORITHMS ---
 
 function hashLimId(user) {
-  // Reference: hashlib.sha256((params + LOCAL["crcKey"]).encode())
-  // crcKey = "6q93-@u9"
   loadLibraries();
+  var u = user || ""; // Safety
   var salt = "6q93-@u9";
-  return CryptoJS.SHA256(user + salt).toString(CryptoJS.enc.Hex);
+  return CryptoJS.SHA256(u + salt).toString(CryptoJS.enc.Hex);
 }
 
 function generateRequestId(user) {
-  // Reference: millis + rand + crc_val
-  // crc_val = format(crc16(user), 'x')
-  
+  var u = user || ""; // Safety
   var millis = new Date().getTime().toString();
   var rand = Math.floor(Math.random() * 100).toString();
-  var crcVal = crc16(user).toString(16);
+  var crcVal = crc16(u).toString(16);
   
   return millis + rand + crcVal;
 }
 
 function crc16(s) {
+  if (!s) return 0; // Safety return
   // CRC-16 (Polygon 0x8005) implementation
   var crc = 0x0000;
   var j, i;
   for (i = 0; i < s.length; i++) {
       var c = s.charCodeAt(i);
       if (c > 255) {
-          throw new RangeError();
+          // throw new RangeError(); // Ignore error for stability
+          c = 0x3F; // Use '?'
       }
       j = (c ^ (crc >> 8)) & 0xFF;
       crc = crcTable[j] ^ (crc << 8);
