@@ -134,15 +134,33 @@ function getVcbHistory(sessionId) {
   
   var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v1/transaction-history", options);
   var txt = res.getContentText();
+  Logger.log("History Raw Response: " + txt.substring(0, 200) + "...");
   
   try {
      var json = JSON.parse(txt);
-     if (json.transactions) return json.transactions;
+     
+     if (json.transactions) {
+       Logger.log("Found " + json.transactions.length + " transactions directly");
+       return json.transactions;
+     }
      
      if (json.d && json.k) {
        var decrypted = decryptResponseWithClientKey(json, clientKeys.privateKeyPem);
-       if (decrypted.transactions) return decrypted.transactions;
+       Logger.log("Decrypted History: " + JSON.stringify(decrypted).substring(0, 500));
+       
+       if (decrypted.transactions) {
+         Logger.log("Found " + decrypted.transactions.length + " transactions after decrypt");
+         return decrypted.transactions;
+       }
+       
+       // Check for ctMon (another field name VCB uses)
+       if (decrypted.ctMon) {
+         Logger.log("Found " + decrypted.ctMon.length + " transactions in ctMon");
+         return decrypted.ctMon;
+       }
      }
+     
+     Logger.log("No transactions field found in response");
      return [];
   } catch (e) {
      Logger.log("History Err: " + e);
