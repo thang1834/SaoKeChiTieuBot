@@ -104,11 +104,17 @@ function getVcbHistory(sessionId) {
   // Generate CLIENT RSA Keypair for this request too
   var clientKeys = generateClientRsaKeypair();
   
+  // Try different payload format based on VCB Mobile app
   var rawPayload = {
-    "accountNo": account,
+    "accountNumber": account,  // Try accountNumber instead of accountNo
+    "accountNo": account,      // Keep both for compatibility
+    "beginDate": today,        // Try beginDate instead of fromDate
     "fromDate": today,
+    "endDate": today,          // Try endDate instead of toDate 
     "toDate": today,
+    "page": 0,
     "pageIndex": 0,
+    "size": 20,
     "lengthInPage": 20,
     "mid": 14,
     "user": user,
@@ -135,7 +141,8 @@ function getVcbHistory(sessionId) {
     muteHttpExceptions: true
   };
   
-  var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v1/transaction-history", options);
+  // Try v2 endpoint first
+  var res = UrlFetchApp.fetch(VCB_CONFIG.BASE_URL + "/bank-service/v2/transaction-history", options);
   var txt = res.getContentText();
   Logger.log("History Raw Response: " + txt.substring(0, 200) + "...");
   
