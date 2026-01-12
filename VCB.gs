@@ -172,7 +172,7 @@ function getVcbHistory(sessionId, accountNo) {
   
   // Simplified payload matching browser format
   var rawPayload = {
-    "accountNo": account,
+    "accountNumber": account, // Switch to accountNumber as seen in DDAccount
     "fromDate": fromDate,
     "toDate": toDate,
     "pageIndex": 0,
@@ -181,7 +181,8 @@ function getVcbHistory(sessionId, accountNo) {
     "user": user,
     "sessionId": sessionId,
     "browserId": getBrowserId(),
-    "clientPubKey": clientKeys.publicKeyBase64
+    "clientPubKey": clientKeys.publicKeyBase64,
+    "lang": "vi" // Add lang back as it worked for getListAccountViaCif
   };
   
   Logger.log("History Request Payload: " + JSON.stringify(rawPayload));
