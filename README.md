@@ -53,6 +53,14 @@ Bạn không cần biết code để sử dụng! Chỉ cần làm theo hướng
 
 ---
 
+## 🛠 Tự Host (Self-Hosting)
+
+Nếu bạn muốn tự chạy Bot trên tài khoản Google của chính mình để hoàn toàn kiểm soát dữ liệu (và miễn phí 100%):
+
+👉 **[Xem Hướng Dẫn Tự Host (SELF_HOSTING.md)](./SELF_HOSTING.md)**
+
+---
+
 ## 🤝 Đóng Góp (Contributors)
 
 Dự án được phát triển và duy trì bởi:
