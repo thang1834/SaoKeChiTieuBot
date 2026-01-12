@@ -114,8 +114,11 @@ function getVcbHistory(sessionId) {
     "user": user,
     "sessionId": sessionId,
     "browserId": getBrowserId(),
-    "clientPubKey": clientKeys.publicKeyBase64
+    "clientPubKey": clientKeys.publicKeyBase64,
+    "lang": "vi"
   };
+  
+  Logger.log("History Request Payload: " + JSON.stringify(rawPayload));
   
   var state = encryptRequest(rawPayload);
   
