@@ -1,87 +1,101 @@
-# 💰 Sao Kê Chi Tiêu Bot (Personal Finance Telegram Bot)
+# 💰 Sao Kê Chi Tiêu Bot
 
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![Platform](https://img.shields.io/badge/Platform-Google_Apps_Script-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**SaoKeChiTieuBot** (`@SaoKeChiTieu_Bot`) là một trợ lý tài chính cá nhân mạnh mẽ chạy hoàn toàn trên nền tảng Serverless (Google Apps Script), giúp bạn ghi chép chi tiêu, theo dõi thu nhập và quản lý ngân sách ngay trên Telegram.
+**SaoKeChiTieuBot** (`@SaoKeChiTieu_Bot`) - Trợ lý tài chính cá nhân chạy trên Telegram + Google Apps Script. Miễn phí, đa người dùng, bảo mật.
 
 ---
 
-## ✨ Tính Năng Nổi Bật (Key Features)
+## ✨ Tính Năng
 
-### 🚀 Core Features
--   **⚡ Multi-User (Đa người dùng)**: Bot hỗ trợ nhiều người dùng cùng lúc. Dữ liệu của mỗi người được lưu trữ riêng biệt trên Google Sheet của chính họ (Privacy First).
--   **📝 Ghi chép nhanh**:
-    -   Chi tiêu: `50k cafe`, `200k tiền điện`.
-    -   Thu nhập: `/in 10m lương tháng 12`.
--   **📊 Báo cáo trực quan**: Tự động tạo biểu đồ tròn (Pie Chart) và biểu đồ cột (Bar Chart) để phân tích dòng tiền.
+### 💸 Chi Tiêu & Thu Nhập
+- **Nhập nhanh**: `50k cafe`, `200k tiền điện`, `/in 10m lương`
+- **Hạng mục tùy chỉnh**: `/category add [tên]`
+- **Chi tiêu định kỳ**: `/recurring add 2m tiền nhà monthly 1`
 
-### 🛠 Advanced Tools
--   **🎯 Quản lý Ngân sách (Budget)**:
-    -   Đặt hạn mức tổng hoặc từng hạng mục (Ví dụ: `2m ăn uống`).
-    -   **Real-time Alert**: Cảnh báo ngay lập tức khi bạn tiêu lố ngân sách.
--   **⏰ Nhắc nhở (Reminder)**: Hẹn giờ bot nhắc nhở nhập liệu hàng ngày (`/remind 21:00`).
--   **📂 Xuất dữ liệu (Export)**: Tải file CSV chuẩn UTF-8 (dùng cho Excel) để lưu trữ offline.
--   **🌍 Đa ngôn ngữ**: Hỗ trợ Tiếng Việt & English.
+### 📊 Báo Cáo
+- **Biểu đồ Doughnut**: `/report` - Phân tích chi tiêu theo %
+- **Danh sách phân trang**: `/list`, `/filter`
+- **Xuất CSV**: `/export`
 
-### 🏦 VCB Bank Tracking (NEW!)
--   **💳 Tự động theo dõi biến động số dư** từ Vietcombank.
--   **🔔 Thông báo Donate**: Tự động gửi tin nhắn "Cảm ơn" khi có tiền vào tài khoản.
--   **🔐 Bảo mật**: Sử dụng AES-256 + RSA encryption, FingerprintJS.
--   **🤖 Captcha AI**: Tích hợp HuggingFace Space để giải captcha tự động.
+### 🎯 Quản Lý Ngân Sách
+- Đặt ngân sách tổng/theo hạng mục: `/budget 5m`, `/budget 2m ăn uống`
+- **Cảnh báo real-time** khi vượt ngân sách
 
----
+### ⚙️ Tiện Ích
+- 🌐 Đa ngôn ngữ (VI/EN)
+- ⏰ Nhắc nhở hàng ngày
+- 🔍 Tìm kiếm, xóa, undo
 
-## 🗺 Roadmap & To-Do List
-
-Dự án đang được phát triển tích cực. Dưới đây là các tính năng dự kiến trong tương lai:
-
-- [x] **🏦 VCB Integration**:
-    -   Tự động theo dõi giao dịch từ Vietcombank.
-    -   Thông báo donate qua Telegram.
-- [ ] **🤖 AI Integration (Gemini Flash)**:
-    -   Tích hợp Google Gemini API để xử lý ngôn ngữ tự nhiên.
-    -   *Ví dụ*: "Sáng nay đổ xăng 50k với ăn sáng 35k" -> Bot tự tách thành 2 giao dịch.
-- [ ] **🌐 Web Dashboard**:
-    -   Xây dựng giao diện Web App (HTML/JS) để xem báo cáo chi tiết và lọc dữ liệu (Custom Date Range).
-- [ ] **🔄 Recurring Transactions**:
-    -   Tự động ghi lại các khoản chi cố định (Tiền nhà, Netflix, Spotify...).
+### 🏦 VCB Integration
+- Tự động theo dõi biến động số dư Vietcombank
+- Thông báo donate qua Telegram
+- Mã hóa AES-256 + RSA
 
 ---
 
-## 🛠 Cài Đặt (Installation)
+## 📁 Cấu Trúc Files
 
-Bạn không cần biết code để sử dụng! Chỉ cần làm theo hướng dẫn:
-
-👉 **[Xem Hướng Dẫn Chi Tiết (GUIDE.md)](./GUIDE.md)**
-
-1.  Chat với Bot trên Telegram.
-2.  Tạo một Google Sheet cá nhân.
-3.  Kết nối bằng lệnh `/connect`.
-
----
-
-## 🛠 Tự Host (Self-Hosting)
-
-Nếu bạn muốn tự chạy Bot trên tài khoản Google của chính mình để hoàn toàn kiểm soát dữ liệu (và miễn phí 100%):
-
-👉 **[Xem Hướng Dẫn Tự Host (SELF_HOSTING.md)](./SELF_HOSTING.md)**
+```
+├── Config.gs      # Cấu hình, constants, localization
+├── Utils.gs       # Telegram API helpers, validation
+├── Features.gs    # Report, Budget, Categories, Recurring
+├── Handlers.gs    # Message/callback handlers, reminders
+├── VCB.gs         # VCB API integration
+├── Lib.gs         # Crypto utilities
+└── App.gs         # Legacy (giữ cho VCB scheduler)
+```
 
 ---
 
-## 🤝 Đóng Góp (Contributors)
+## 🚀 Lệnh Có Sẵn
 
-Dự án được phát triển và duy trì bởi:
-
-*   **Thang Nguyen** - [Create & Maintain]
-    *   Github: [thang1834](https://github.com/thang1834)
-    *   PayPal: [wonwolf1834](https://paypal.me/wonwolf1834)
-
-Mọi đóng góp (Pull Request, Issue) đều được hoan nghênh!
+| Lệnh | Mô tả |
+|------|-------|
+| `/connect [ID]` | Kết nối Google Sheet |
+| `/report` | Báo cáo chi tiêu (có biểu đồ) |
+| `/list` | Danh sách giao dịch |
+| `/filter` | Lọc theo hạng mục |
+| `/in [số] [ghi chú]` | Nhập thu nhập |
+| `/budget` | Xem/đặt ngân sách |
+| `/category` | Quản lý hạng mục tùy chỉnh |
+| `/recurring` | Quản lý chi tiêu định kỳ |
+| `/export` | Xuất file CSV |
+| `/remind` | Đặt nhắc nhở |
+| `/lang` | Đổi ngôn ngữ |
+| `/donate` | Ủng hộ tác giả |
 
 ---
+
+## 🛠 Cài Đặt
+
+### Cho Người Dùng
+1. Mở Telegram, chat với `@SaoKeChiTieu_Bot`
+2. Tạo Google Sheet, share **Editor** cho `ducthang01052002@gmail.com`
+3. Gõ `/connect [Sheet_ID]`
+
+👉 **[Chi tiết: GUIDE.md](./GUIDE.md)**
+
+### Tự Host
+👉 **[Chi tiết: SELF_HOSTING.md](./SELF_HOSTING.md)**
+
+---
+
+## 🗺 Roadmap
+
+- [ ] AI Integration (Gemini)
+- [ ] Web Dashboard
+
+---
+
+## 🤝 Đóng Góp
+
+**Thang Nguyen** - [thang1834](https://github.com/thang1834)
+
+Mọi PR/Issue đều được hoan nghênh!
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License
