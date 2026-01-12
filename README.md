@@ -78,10 +78,11 @@
 ### 📂 Hạng Mục Tùy Chỉnh
 | Lệnh | Mô tả |
 |------|-------|
-| `/category` | Xem danh sách hạng mục |
+| `/category` | Xem danh sách |
 | `/category add [tên]` | Thêm hạng mục chi tiêu |
-| `/category del [tên]` | Xóa hạng mục |
-| `/category income add [tên]` | Thêm hạng mục thu nhập |
+| `/category del [tên]` | Xóa hạng mục chi tiêu |
+| `/category in add [tên]` | Thêm hạng mục thu nhập |
+| `/category in del [tên]` | Xóa hạng mục thu nhập |
 
 ### 🔄 Chi Tiêu Định Kỳ
 | Lệnh | Mô tả |

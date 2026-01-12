@@ -1,81 +1,135 @@
 /**
- * Config.gs
- * Configuration and constants for SaoKeChiTieuBot
+ * ============================================================================
+ * Config.gs - CẤU HÌNH VÀ HẰNG SỐ
+ * ============================================================================
+ * File này chứa tất cả cấu hình, hằng số và văn bản đa ngôn ngữ cho bot.
+ * Không chứa logic xử lý, chỉ chứa dữ liệu cấu hình.
+ * 
+ * CẤU TRÚC:
+ * - CONFIG: Object chứa tất cả cấu hình (lấy từ Script Properties)
+ * - TEXT: Object chứa văn bản đa ngôn ngữ (vi/en)
+ * - Helper functions: getUserLang, setUserLang, t (translate)
  */
 
-// --- CONFIGURATION ---
+// =============================================================================
+// CẤU HÌNH CHÍNH
+// =============================================================================
+// Tất cả giá trị nhạy cảm được lưu trong Script Properties để bảo mật
+// Vào Project Settings > Script Properties để cấu hình
+
 var CONFIG = {
-  // VCB Integration
+  // --- VCB INTEGRATION ---
+  // Thông tin đăng nhập Vietcombank Mobile Banking
   VCB_USER: PropertiesService.getScriptProperties().getProperty('VCB_USER') || '',
   VCB_PASS: PropertiesService.getScriptProperties().getProperty('VCB_PASS') || '',
   VCB_ACC: PropertiesService.getScriptProperties().getProperty('VCB_ACC') || '',
+  
+  // HuggingFace API để giải captcha VCB tự động
   HF_API: 'https://thangnd163063-captcha.hf.space/predict',
   
-  // Telegram
+  // --- TELEGRAM ---
+  // Token lấy từ @BotFather
   BOT_TOKEN: PropertiesService.getScriptProperties().getProperty('BOT_TOKEN'),
+  
+  // Chat ID của admin (nhận thông báo donate, lỗi hệ thống)
   ADMIN_CHAT_ID: PropertiesService.getScriptProperties().getProperty('MY_CHAT_ID'),
   
-  // Google Sheets
+  // --- GOOGLE SHEETS ---
+  // ID của Master Sheet (chứa danh sách Users)
   MASTER_SHEET_ID: PropertiesService.getScriptProperties().getProperty('SHEET_ID'),
+  
+  // Email của bot (users share Sheet cho email này)
   BOT_EMAIL: PropertiesService.getScriptProperties().getProperty('BOT_EMAIL') || 'your_email@gmail.com',
   
-  // App Settings
-  DEFAULT_LANG: 'vi',
-  CACHE_DURATION: 21600, // 6 hours
-  PAGE_SIZE: 10,
+  // --- CÀI ĐẶT ỨNG DỤNG ---
+  DEFAULT_LANG: 'vi',           // Ngôn ngữ mặc định
+  CACHE_DURATION: 21600,        // Thời gian cache (6 giờ = 21600 giây)
+  PAGE_SIZE: 10,                // Số item mỗi trang khi phân trang
   
-  // Categories
+  // --- HẠNG MỤC MẶC ĐỊNH ---
+  // Sử dụng khi user chưa tạo custom categories
   EXPENSE_CATEGORIES: ["Ăn uống", "Học tập", "Nhà cửa", "Y tế", "Giải trí", "Khác"],
   INCOME_CATEGORIES: ["Lương", "Thưởng", "Đầu tư", "Donate", "Khác"],
   
-  // Chart colors
+  // --- MÀU BIỂU ĐỒ ---
+  // Dùng cho QuickChart API
   CHART_COLORS: [
     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', 
     '#FF9F40', '#7CFC00', '#FF69B4', '#00CED1', '#FFD700'
   ]
 };
 
-// --- LOCALIZATION ---
+// =============================================================================
+// VĂN BẢN ĐA NGÔN NGỮ (LOCALIZATION)
+// =============================================================================
+// Hỗ trợ: Tiếng Việt (vi) và English (en)
+// Mỗi user có thể chọn ngôn ngữ riêng
+
 var TEXT = {
+  // --- TIẾNG VIỆT ---
   vi: {
+    // Thông báo kết nối
     unauth: "⛔ Bạn chưa kết nối Sheet!\n1. Tạo Google Sheet mới.\n2. Share quyền **Editor** cho email: `" + CONFIG.BOT_EMAIL + "`\n3. Copy Sheet ID.\n4. Gõ: `/connect [Sheet_ID]`",
     connect_success: "✅ **Kết nối thành công!**\nBot đã tạo sẵn các sheet cần thiết. Hãy bắt đầu nhập chi tiêu!",
     connect_fail: "⛔ **Lỗi kết nối!**\nKhông thể truy cập Sheet ID này. Hãy Share quyền **Editor** cho `" + CONFIG.BOT_EMAIL + "`.",
+    
+    // Thông báo lưu
     saved: "✅ **Đã lưu chi:**",
     saved_in: "💰 **Đã lưu thu:**",
+    
+    // Báo cáo
     report_header: "📊 **BÁO CÁO THÁNG**",
     total_in: "💰 THU:",
     total_out: "💸 CHI:",
     balance: "💎 **DƯ:**",
+    
+    // Ngân sách
     budget_alert: "⚠️ **BÁO ĐỘNG**: Vượt ngân sách!",
     budget_warning: "⚠️ **Sắp hết tiền**: Đã dùng",
+    
+    // Danh sách
     no_data: "📭 Không có dữ liệu.",
     list_header: "📅 GD Tháng",
+    
+    // Nhắc nhở
     reminder_set: "⏰ Đã đặt nhắc nhở hàng ngày lúc",
     reminder_off: "🔕 Đã tắt nhắc nhở.",
+    
+    // Export
     export_msg: "📂 **Dữ liệu của bạn đây:**\n",
+    
+    // Lỗi
     invalid_num: "❌ Số không hợp lệ.",
     invalid_time: "❌ Giờ không hợp lệ (VD: 21:30).",
+    
+    // Xóa/Undo
     undo_confirm: "🗑 Xác nhận xóa mục cuối?",
     deleted: "🗑 Đã xóa.",
     cancel_undo: "☕ Đã hủy lệnh xóa.",
+    
+    // Tìm kiếm
     search_result: "Kết quả tìm kiếm:",
     not_found: "Không tìm thấy",
+    
+    // UI
     choose_cat: "Lưu vào hạng mục nào?",
     choose_lang: "🌐 Chọn ngôn ngữ / Choose language:",
     lang_set: "🇻🇳 Đã chuyển sang Tiếng Việt.",
     donate_msg: "🙏 **Cảm ơn bạn đã ủng hộ!**\nQuét mã QR bên dưới để chuyển khoản:",
+    
+    // Hướng dẫn sử dụng
     help: "🌟 **HƯỚNG DẪN SỬ DỤNG** 🌟\n\n" +
-          "📌 **KẾT NỐI**\n`/connect [SheetID]` - Kết nối Sheet\n\n" +
-          "💸 **CHI TIÊU**\n`50k cafe` - Nhập chi tiêu\n`/undo` - Xóa mục cuối\n`/delete [ID]` - Xóa theo ID\n`/search [từ khóa]` - Tìm kiếm\n\n" +
-          "💰 **THU NHẬP**\n`/in 10m lương` - Nhập thu nhập\n\n" +
-          "📊 **BÁO CÁO**\n`/report` `/list` `/filter` `/export`\n\n" +
-          "🎯 **NGÂN SÁCH**\n`/budget` - Xem/đặt ngân sách\n\n" +
-          "📂 **HẠNG MỤC**\n`/category` - Xem danh sách\n`/category add [tên]` - Thêm\n`/category del [tên]` - Xóa\n\n" +
-          "🔄 **ĐỊNH KỲ**\n`/recurring` - Xem danh sách\n`/recurring add 2m nhà monthly 1` - Thêm\n`/recurring del [ID]` - Xóa\n\n" +
-          "⏰ **NHẮC NHỞ**\n`/remind 21:00` `/stopremind`\n\n" +
-          "⚙️ **CÀI ĐẶT**\n`/lang` `/donate`"
+          "📌 **KẾT NỐI**\n`/connect [SheetID]`\n\n" +
+          "💸 **CHI TIÊU**\n`50k cafe` - Nhập chi tiêu\n`/list` `/undo` `/delete [ID]` `/search`\n\n" +
+          "💰 **THU NHẬP**\n`/in 10m lương` - Nhập\n`/listin` `/undoin` `/deletein` `/searchin`\n\n" +
+          "📊 **BÁO CÁO**\n`/report` `/filter` `/export`\n\n" +
+          "🎯 **NGÂN SÁCH**\n`/budget [số] [hạng mục]`\n\n" +
+          "📂 **HẠNG MỤC**\n`/category` - Xem\n`/category add/del [tên]` - Chi tiêu\n`/category in add/del [tên]` - Thu nhập\n\n" +
+          "🔄 **ĐỊNH KỲ**\n`/recurring` - Xem\n`/recurring add 2m nhà monthly 1`\n\n" +
+          "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
   },
+  
+  // --- ENGLISH ---
   en: {
     unauth: "⛔ Sheet not connected!\n1. Create a new Google Sheet.\n2. Share **Editor** access to: `" + CONFIG.BOT_EMAIL + "`\n3. Copy Sheet ID.\n4. Type: `/connect [Sheet_ID]`",
     connect_success: "✅ **Connected successfully!**\nDatabase initialized. Start tracking now!",
@@ -105,50 +159,78 @@ var TEXT = {
     lang_set: "🇬🇧 Language switched to English.",
     donate_msg: "🙏 **Thank you for your support!**\nScan the QR code below to donate:",
     help: "🌟 **USER GUIDE** 🌟\n\n" +
-          "📌 **CONNECTION**\n`/connect [SheetID]` - Connect Sheet\n\n" +
-          "💸 **EXPENSES**\n`50k coffee` - Log expense\n`/undo` - Delete last\n`/delete [ID]` - Delete by ID\n`/search [keyword]` - Search\n\n" +
-          "💰 **INCOME**\n`/in 10m salary` - Log income\n\n" +
-          "📊 **REPORTS**\n`/report` `/list` `/filter` `/export`\n\n" +
-          "🎯 **BUDGET**\n`/budget` - View/set budget\n\n" +
-          "📂 **CATEGORIES**\n`/category` - List all\n`/category add [name]` - Add\n`/category del [name]` - Delete\n\n" +
-          "🔄 **RECURRING**\n`/recurring` - View list\n`/recurring add 2m rent monthly 1` - Add\n`/recurring del [ID]` - Delete\n\n" +
-          "⏰ **REMINDERS**\n`/remind 21:00` `/stopremind`\n\n" +
-          "⚙️ **SETTINGS**\n`/lang` `/donate`"
+          "📌 **CONNECTION**\n`/connect [SheetID]`\n\n" +
+          "💸 **EXPENSES**\n`50k coffee` - Log\n`/list` `/undo` `/delete [ID]` `/search`\n\n" +
+          "💰 **INCOME**\n`/in 10m salary` - Log\n`/listin` `/undoin` `/deletein` `/searchin`\n\n" +
+          "📊 **REPORTS**\n`/report` `/filter` `/export`\n\n" +
+          "🎯 **BUDGET**\n`/budget [amount] [category]`\n\n" +
+          "📂 **CATEGORIES**\n`/category` - View\n`/category add/del [name]` - Expense\n`/category in add/del [name]` - Income\n\n" +
+          "🔄 **RECURRING**\n`/recurring` - View\n`/recurring add 2m rent monthly 1`\n\n" +
+          "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
   }
 };
 
-// --- HELPER FUNCTIONS ---
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Lấy giá trị cấu hình theo key
+ * @param {string} key - Tên config cần lấy
+ * @returns {*} Giá trị config
+ */
 function getConfig(key) {
   return CONFIG[key];
 }
 
+/**
+ * Lấy ngôn ngữ của user (có cache)
+ * Thứ tự ưu tiên: Cache > Users Sheet > Default
+ * 
+ * @param {string|number} telegramId - Telegram ID của user
+ * @returns {string} Mã ngôn ngữ ('vi' hoặc 'en')
+ */
 function getUserLang(telegramId) {
   var cache = CacheService.getScriptCache();
   var lang = cache.get("lang_" + telegramId);
+  
+  // Nếu có trong cache, trả về luôn
   if (lang) return lang;
   
-  // Try to get from Users sheet
+  // Tìm trong Users sheet
   try {
     var ss = SpreadsheetApp.openById(CONFIG.MASTER_SHEET_ID);
     var sheet = ss.getSheetByName('Users');
     if (sheet) {
       var data = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
+        // Column E (index 4) = Language
         if (String(data[i][0]) === String(telegramId) && data[i][4]) {
+          // Lưu vào cache để lần sau nhanh hơn
           cache.put("lang_" + telegramId, data[i][4], CONFIG.CACHE_DURATION);
           return data[i][4];
         }
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    // Lỗi thì dùng default
+  }
   
   return CONFIG.DEFAULT_LANG;
 }
 
+/**
+ * Đặt ngôn ngữ cho user
+ * Lưu vào cả Cache và Users Sheet
+ * 
+ * @param {string|number} telegramId - Telegram ID của user
+ * @param {string} lang - Mã ngôn ngữ ('vi' hoặc 'en')
+ */
 function setUserLang(telegramId, lang) {
+  // Lưu vào cache (nhanh cho các request tiếp theo)
   CacheService.getScriptCache().put("lang_" + telegramId, lang, CONFIG.CACHE_DURATION);
   
-  // Also save to Users sheet if exists
+  // Lưu vào Users sheet (persistent)
   try {
     var ss = SpreadsheetApp.openById(CONFIG.MASTER_SHEET_ID);
     var sheet = ss.getSheetByName('Users');
@@ -161,9 +243,22 @@ function setUserLang(telegramId, lang) {
         }
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    // Lỗi không quan trọng, cache vẫn hoạt động
+  }
 }
 
+/**
+ * Dịch text theo ngôn ngữ của user
+ * Shorthand function để lấy text đã localize
+ * 
+ * @param {string} key - Key của text trong TEXT object
+ * @param {string|number} telegramId - Telegram ID để xác định ngôn ngữ
+ * @returns {string} Text đã được dịch
+ * 
+ * @example
+ * t('saved', 123456) // "✅ **Đã lưu chi:**" nếu user dùng tiếng Việt
+ */
 function t(key, telegramId) {
   var lang = telegramId ? getUserLang(telegramId) : CONFIG.DEFAULT_LANG;
   return (TEXT[lang] && TEXT[lang][key]) ? TEXT[lang][key] : (TEXT['vi'][key] || key);

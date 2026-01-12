@@ -1,9 +1,65 @@
 /**
- * Features.gs
- * Core feature functions for SaoKeChiTieuBot
+ * ============================================================================
+ * Features.gs - TÍNH NĂNG CHÍNH
+ * ============================================================================
+ * File này chứa tất cả các tính năng chính của bot:
+ * 
+ * 📊 REPORT (dòng ~7-149)
+ *    - sendReport(): Tạo báo cáo tháng với biểu đồ
+ *    - generateExpenseChart(): Tạo URL biểu đồ QuickChart
+ * 
+ * 📜 LIST (dòng ~151-210)
+ *    - listExpenses(): Danh sách chi tiêu phân trang
+ * 
+ * 🎯 BUDGET (dòng ~212-296)
+ *    - checkBudgetAlert(): Kiểm tra cảnh báo ngân sách
+ *    - setBudget(): Đặt ngân sách
+ *    - getBudgetMap(): Lấy map ngân sách
+ * 
+ * 📤 EXPORT (dòng ~298-347)
+ *    - sendExportOptions(): Gửi menu export
+ *    - exportData(): Xuất CSV lên Drive
+ * 
+ * 💸 EXPENSE/INCOME HANDLERS (dòng ~349-426)
+ *    - handleExpenseMessage(): Parse và show buttons
+ *    - handleSaveExpense(): Lưu vào sheet
+ *    - handleIncomeCommand(): Parse thu nhập
+ *    - handleSaveIncome(): Lưu thu nhập
+ *    - handleDonateCommand(): Hiển thị QR donate
+ * 
+ * 🔍 SEARCH/DELETE (dòng ~428-468)
+ *    - searchExpenses(): Tìm kiếm chi tiêu
+ *    - deleteById(): Xóa theo ID
+ *    - askUndoConfirmation(): Xác nhận xóa
+ *    - executeDelete(): Thực thi xóa
+ * 
+ * 💰 INCOME MANAGEMENT (dòng ~470-598)
+ *    - searchIncome(), deleteIncomeById(), listIncome()
+ *    - Bảo vệ Donate không cho xóa
+ * 
+ * 📂 CUSTOM CATEGORIES (dòng ~600-784)
+ *    - getCategories(): Lấy danh sách hạng mục
+ *    - addCategory(), removeCategory()
+ *    - listCategories(), handleCategoryCommand()
+ *    - sendCategoryButtonsCustom(): UI với custom categories
+ * 
+ * 🔄 RECURRING TRANSACTIONS (dòng ~786-1010)
+ *    - addRecurring(), removeRecurring(), listRecurring()
+ *    - processRecurringTransactions(): Xử lý tự động hàng ngày
+ *    - setupDailyRecurringTrigger(): Tạo trigger
  */
 
-// --- REPORT FEATURE ---
+// =============================================================================
+// REPORT FEATURE - Báo cáo chi tiêu
+// =============================================================================
+
+/**
+ * Gửi báo cáo chi tiêu tháng kèm biểu đồ
+ * @param {string|number} cid - Chat ID
+ * @param {string} sheetId - ID Google Sheet của user
+ * @param {string} arg - Tháng/năm (VD: "12/2025" hoặc "")
+ * @param {string|number} telegramId - Telegram ID
+ */
 function sendReport(cid, sheetId, arg, telegramId) {
   try {
     var expSheet = getOrCreateSheetForUser(sheetId, 'Expense');
@@ -722,24 +778,58 @@ function listCategories(cid, sheetId, telegramId) {
 
 function handleCategoryCommand(cid, sheetId, args, telegramId) {
   var parts = args.split(" ");
-  var action = parts[0].toLowerCase();
-  var name = parts.slice(1).join(" ");
+  var action = parts[0] ? parts[0].toLowerCase() : '';
+  
+  // /category - show list
+  if (!action) {
+    listCategories(cid, sheetId, telegramId);
+    return;
+  }
+  
+  // /category add [name] - add expense category (default)
+  // /category del [name] - delete expense category (default)
+  // /category expense add [name] - explicit expense
+  // /category in add [name] - add income category
+  // /category in del [name] - delete income category
   
   if (action === "add") {
+    var name = parts.slice(1).join(" ");
     addCategory(cid, sheetId, name, 'expense', telegramId);
   } else if (action === "del" || action === "delete" || action === "remove") {
+    var name = parts.slice(1).join(" ");
     removeCategory(cid, sheetId, name, 'expense', telegramId);
-  } else if (action === "income") {
-    // /category income add [name]
+  } else if (action === "expense") {
+    // /category expense add [name]
+    var subAction = parts[1] ? parts[1].toLowerCase() : '';
+    var subName = parts.slice(2).join(" ");
+    if (subAction === "add") {
+      addCategory(cid, sheetId, subName, 'expense', telegramId);
+    } else if (subAction === "del") {
+      removeCategory(cid, sheetId, subName, 'expense', telegramId);
+    } else {
+      listCategories(cid, sheetId, telegramId);
+    }
+  } else if (action === "in" || action === "income") {
+    // /category in add [name]
     var subAction = parts[1] ? parts[1].toLowerCase() : '';
     var subName = parts.slice(2).join(" ");
     if (subAction === "add") {
       addCategory(cid, sheetId, subName, 'income', telegramId);
     } else if (subAction === "del") {
       removeCategory(cid, sheetId, subName, 'income', telegramId);
+    } else {
+      listCategories(cid, sheetId, telegramId);
     }
   } else {
-    listCategories(cid, sheetId, telegramId);
+    // Unknown action, show help
+    sendText(cid, "📂 **Quản lý hạng mục**\n\n" +
+      "**Chi tiêu:**\n" +
+      "`/category add [tên]` - Thêm\n" +
+      "`/category del [tên]` - Xóa\n\n" +
+      "**Thu nhập:**\n" +
+      "`/category in add [tên]` - Thêm\n" +
+      "`/category in del [tên]` - Xóa\n\n" +
+      "`/category` - Xem danh sách");
   }
 }
 

@@ -59,8 +59,14 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ### 📂 Hạng Mục Tùy Chỉnh
 ```
 /category                 → Xem danh sách
-/category add Cà phê      → Thêm hạng mục
-/category del Cà phê      → Xóa hạng mục
+
+# Chi tiêu (mặc định)
+/category add Cà phê      → Thêm
+/category del Cà phê      → Xóa
+
+# Thu nhập
+/category in add Thưởng   → Thêm
+/category in del Thưởng   → Xóa
 ```
 
 ### 🔄 Chi Tiêu Định Kỳ
