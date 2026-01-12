@@ -1,0 +1,10 @@
+# Google Apps Script credentials
+.clasp.json
+creds.json
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
