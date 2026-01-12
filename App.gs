@@ -44,24 +44,34 @@ function runCheckBalance() {
       Logger.log("✅ Captcha solved: " + captchaText);
       
       // 3. Login
-      var sessionId = loginVCB(captchaText, captchaObj);
+      // 3. Login
+      var loginResult = loginVCB(captchaText, captchaObj);
+      var sessionId = null;
+      var userInfo = null;
+      
+      if (loginResult && loginResult.sessionId) {
+          sessionId = loginResult.sessionId;
+          // Extract userInfo (it might be nested or flat depending on VCB response)
+          userInfo = loginResult.userInfo || loginResult;
+      }
       
       if (sessionId) {
         Logger.log("✅ Login Success, SessionID: " + sessionId.substring(0, 10) + "...");
         
         // 4. Get Account List (REQUIRED to activate account in session)
-        var accounts = getListAccountViaCif(sessionId);
+        var accounts = getListAccountViaCif(sessionId, userInfo);
         var useAccount = null;
         
         if (accounts && accounts.length > 0) {
            // Try to extract account number from first account
            var acc = accounts[0];
+           // Priority: accountNo > accountNumber > number > id
            useAccount = acc.accountNo || acc.accountNumber || acc.number || acc.id;
            Logger.log("Using Account Number from List: " + useAccount);
         }
         
         // 5. Get History
-        var txns = getVcbHistory(sessionId, useAccount);
+        var txns = getVcbHistory(sessionId, useAccount, userInfo);
         
         // 6. Process
         if (txns && txns.length > 0) {

@@ -1,0 +1,1134 @@
+Directory structure:
+└── netrotion-vcb-api/
+    ├── README.md
+    ├── main.py
+    ├── requirements.txt
+    ├── browserid/
+    │   ├── index.html
+    │   ├── index.py
+    │   ├── css/
+    │   │   └── fingerprint.css
+    │   └── js/
+    │       └── fingerprint.js
+    ├── config/
+    │   └── user.json
+    ├── model/
+    │   ├── app.py
+    │   ├── example.py
+    │   └── utils.py
+    └── utils/
+        ├── __init__.py
+        ├── _algorithm.py
+        ├── _params.py
+        └── captcha_solving.py
+
+================================================
+FILE: README.md
+================================================
+# VCB DigiBank UNOFFICIAL API 🚀
+
+## Giới thiệu 📢
+
+Đây là project tự động hóa đăng nhập và lấy lịch sử giao dịch tài khoản Vietcombank (VCB DigiBank) thông qua API web. Dự án sử dụng Python để mô phỏng quá trình đăng nhập, giải captcha, mã hóa/giải mã dữ liệu và lấy thông tin giao dịch. Ngoài ra, project còn cung cấp giao diện web đơn giản để lấy BrowserID (Fingerprint) phục vụ cho quá trình đăng nhập.
+
+## Tính năng ✨
+
+- 🔐 Tự động đăng nhập tài khoản VCB DigiBank bằng username, password và BrowserID.
+- 🤖 Tự động giải captcha bằng API (Dùng của mình hoặc tự build theo folder model).
+- 🔒 Mã hóa/giải mã dữ liệu theo chuẩn của VCB.
+- 📊 Lấy toàn bộ lịch sử giao dịch trong khoảng thời gian tùy chọn.
+- 🌐 Hỗ trợ proxy và tùy chỉnh session.
+- 🖥️ Giao diện web lấy BrowserID (Fingerprint) dễ sử dụng.
+
+## Cấu trúc thư mục 📁
+
+```
+VCB/
+├── main.py
+├── utils/
+│   ├── _algorithm.py
+│   ├── _params.py
+│   ├── captcha_solving.py
+│   └── __init__.py
+├── config/
+│   └── user.json
+├── broserid/
+│   ├── index.html
+│   ├── index.py
+│   ├── css/
+│   │   └── fingerprint.css
+│   └── js/
+│       └── fingerprint.js
+├── model/
+│   ├── app.py
+│   ├── captcha_model.h5
+│   ├── example.py
+│   └── utils.py
+├── requirements.txt
+└── README.md
+```
+
+## Hướng dẫn sử dụng 🛠️
+
+### 1. Cài đặt thư viện
+
+Cài đặt các thư viện cần thiết (yêu cầu Python 3.8+):
+
+```sh
+pip install -r requirements.txt
+```
+
+### 2. Cấu hình tài khoản
+
+Điền đầy đủ thông tin vào file  `config/user.json`
+
+### 3. Lấy BrowserID
+
+- Mở file `broserid/index.html` trên trình duyệt.
+- Copy giá trị `Visitor ID` (BrowserID) và điền vào biến `browser_id` trong `main.py` nếu muốn sử dụng BrowserID mới.
+
+### 4. Chạy chương trình
+
+```sh
+python main.py
+```
+
+Kết quả sẽ trả về lịch sử giao dịch tài khoản.
+
+---
+
+## Ví dụ sử dụng các hàm thao tác với Thư viện VCB-API
+
+```python
+# main.py
+
+#... exist code...
+
+# Đăng nhập tài khoản
+session = vcb_api.login(username="your_username", password="your_password", browser_id="your_browserid")
+
+# Lấy thông tin tài khoản
+account_info = vcb_api.get_account_info(session)
+print("Thông tin tài khoản:", account_info)
+
+# Lấy lịch sử giao dịch trong khoảng thời gian
+history = vcb_api.get_transaction_history(session, from_date="2024-01-01", to_date="2024-05-28")
+print("Lịch sử giao dịch:", history)
+
+# Kiểm tra số tài khoản bank bất kỳ
+nquiry_holdername = vcb_api._nquiry_holdername("0345370248", BANKCODE().MB["bankcode"])
+print("Thông tin bank: ", nquiry_holdername)
+```
+
+> Thay thế `your_username`, `your_password`, `your_browserid` bằng thông tin thực tế của bạn.  
+> Các hàm có thể thay đổi tùy theo cách bạn tổ chức code trong `utils/` hoặc `main.py`.
+
+---
+
+## Lưu ý ⚠️
+
+- ❗ Không chia sẻ thông tin tài khoản cho bất kỳ ai.
+- 🚫 Không sử dụng project cho mục đích thương mại hoặc vi phạm pháp luật.
+- 📚 Project chỉ mang tính chất nghiên cứu và học tập.
+
+## Đóng góp 🤝
+
+Mọi đóng góp, báo lỗi hoặc ý tưởng cải tiến xin gửi issue hoặc pull request.
+
+---
+
+**Tác giả:** LeVietHung  - Netrotion  
+**Liên hệ:** [GitHub](https://github.com/netrotion)
+
+## ☕ Buy me a coffee
+
+Nếu bạn thấy dự án hữu ích và muốn ủng hộ tác giả, bạn có thể gửi đóng góp qua chuyển khoản:
+
+- **Ngân hàng:** Vietcombank  
+- **Số tài khoản:** 1057236828  
+- **Chủ tài khoản:** Lê Việt Hùng
+
+
+================================================
+FILE: main.py
+================================================
+from utils import *
+
+#https://vcbdigibank.vietcombank.com.vn/default-libs_shared_services_src_index_ts.3ac1e1e8a8a6e65f.
+
+class VCB:
+    def __init__(self, username: str = "", password: str = "", browserID = "", proxies: dict = {}, session: object = None) -> None:
+        if session:
+            self.session = session
+        else:
+            self.session = requests.Session()
+            if proxies:
+                self.session.proxies.update(
+                    {
+                        "http": proxies.get("http"),
+                        "https": proxies.get("https")
+                    }
+                )
+                self.session.headers.update(self._headers())
+                update_cookies = self.session.get("https://vcbdigibank.vietcombank.com.vn/auth")
+        
+        self.mid = {
+            "login" : 6,
+            "balance" : 13,
+            "transaction_history" : 14,
+            "nquiry_holdername" : 917
+
+        }
+        self.session_id = ""
+        self.access_key = ""
+        self.cif        = None
+        self.mobileId   = ""
+        self.accountNo  = ""
+        self.clientId   = ""
+        self.login_message = ""
+        self.x_lim_id = ""
+        self.x_requests_id = ""
+        self.is_login = False
+        self.username = username
+        self.password = password
+        self.browserID = browserID
+        self.BANKLISTS = BANK_CODE()
+        self.private_key, self.public_key = gen_keys()
+        login_data = self._login()
+        try:
+            self.login_message = login_data["message"]
+        except:
+            self.login_message = ""
+        self.login_logs = login_data["message"]
+        self.is_login = login_data["status"]
+
+    def  _get_default_json(self, additional_dict: dict = {}) -> dict:
+        default = {
+            "DT": "Windows",
+            "E": None,
+            "OV": "10",
+            "PM": "Chrome 136.0.0.0",
+            "accountType": "D",
+            "appVersion": "",
+            "browserId": self.browserID,
+            "cif": None,
+            "clientPubKey": self.public_key,
+            "lang": "vi",
+            "user": self.username,
+        }
+        if self.access_key:
+            default["accountNo"] = self.accountNo
+            default["clientId"] = self.clientId
+            default["cif"] = self.cif
+            default["mobileId"] = self.mobileId
+            default["sessionId"] = self.session_id
+            self.x_lim_id = x_lim_id(self.username)
+            self.x_requests_id = x_requests_id(self.username)
+        return {
+            **default,
+            **additional_dict
+        }
+    
+    def _headers(self) -> dict:
+        return {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5',
+            'cache-control': 'no-cache',
+            'dnt': '1',
+            'pragma': 'no-cache',
+            'priority': 'u=0, i',
+            'sec-ch-ua': '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'same-origin',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+        }
+    
+    def _post_headers(self, additional_dict: dict = {}) -> dict:
+        headers = {
+            'accept'            : 'application/json, text/plain, */*',
+            'accept-language'   : 'vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5',
+            'cache-control'     : 'no-cache',
+            'content-type'      : 'application/json',
+            'dnt'               : '1',
+            'origin'            : 'https://vcbdigibank.vietcombank.com.vn',
+            'pragma'            : 'no-cache',
+            'priority'          : 'u=1, i',
+            'referer'           : 'https://vcbdigibank.vietcombank.com.vn/',
+            'sec-ch-ua'         : '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
+            'sec-ch-ua-mobile'  : '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest'    : 'empty',
+            'sec-fetch-mode'    : 'cors',
+            'sec-fetch-site'    : 'same-site',
+            'user-agent'        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+            'x-channel'         : 'Web',
+            'x-lim-id'          : self.x_lim_id,
+            'x-request-id'      : self.x_requests_id,
+            **additional_dict
+        }
+        return headers
+    
+    def _login(self) -> dict:
+        """dang nhap web"""
+        captcha_guid = create_guid()
+        response = self.session.post(
+            url = "https://digiapp.vietcombank.com.vn/authen-service/v1/login", 
+            json=encrypt_request(
+                data=self._get_default_json(
+                    {
+                        "captchaToken": captcha_guid,
+                        "captchaValue": Captcha(captcha_guid).solving(),
+                        "mid": self.mid["login"],
+                        "password": self.password,
+                    }
+                ), 
+                client_pub_key_str=self.public_key, 
+                server_pub_key_base64=LOCAL["publicKey"]
+            ), 
+            headers = self._post_headers()
+        ).json()
+        dec = decrypt_response(response, self.private_key)
+        if dec["code"] == "019":
+            return {
+                "status": False,
+                "message" : "chưa mở login web setting",
+                "data" : dec
+            }
+        elif dec["code"] == "20231":
+            return {
+                "status": False,
+                "message" : "browser is not activated",
+                "data" : dec
+            }
+        elif dec["code"] == "0111":
+            """captcha not fit"""
+            return self._login()
+        elif dec["code"] == "9993":
+            return {
+                "status": False,
+                "message" : "Data format error",
+                "data" : dec
+            }
+        elif dec["code"] == "3005":
+            return {
+                "status": False,
+                "message" : "Unable username or password",
+                "data" : dec
+            }
+        elif dec["code"] == "00":
+            self.session_id = dec["sessionId"]
+            self.access_key = dec["accessKey"]
+            self.cif        = dec["userInfo"]["cif"]
+            self.mobileId   = dec["userInfo"]["mobileId"]
+            self.accountNo  = dec["userInfo"]["defaultAccount"]
+            self.clientId   = dec["userInfo"]["clientId"]
+            
+            return {
+                "status": True,
+                "message" : "login success",
+                "data" : dec
+            }
+        return {
+            "status" : False,
+            "message" : "login failed",
+            "data" : dec
+        }
+    
+    def _checksum():
+        #khong can thiet :D
+        pass
+
+    def _bank_soft_otp():
+        #khong can thiet :D
+        pass
+
+    def _get_home_popup():
+        #khong can thiet :D
+        pass
+
+    def _get_config_value():
+        #khong can thiet :D
+        pass
+
+    def _nquiry_holdername(self, accountNo: str = "", bankCode: str = ""):
+        """kiem tra so tai khoan bank trong nuoc"""
+
+        response = self.session.post(
+            url="https://digiapp.vietcombank.com.vn/napas-service/v1/inquiry-holdername",
+            json=encrypt_request(
+                data=self._get_default_json(
+                    {
+                        "mid": self.mid["nquiry_holdername"],
+                        "accountNo": accountNo,
+                        "bankCode": bankCode
+                    }
+                ), 
+                client_pub_key_str=self.public_key, 
+                server_pub_key_base64=LOCAL["publicKey"]
+            ),
+            headers=self._post_headers()
+        ).json()
+        return decrypt_response(response, self.private_key)
+        
+    def _get_account_balance(self, format: object = int) -> dict:
+        """lay so du hien tai"""
+        response = self.session.post(
+            url="https://digiapp.vietcombank.com.vn/bank-service/v2/get-account-detail",
+            json= encrypt_request(
+                data = self._get_default_json(
+                    {"mid" : self.mid["balance"]}
+                ), 
+                client_pub_key_str=self.public_key, 
+                server_pub_key_base64=LOCAL["publicKey"]
+            ),
+            headers=self._post_headers()
+        ).json()
+        dec = decrypt_response(response, self.private_key)
+        if dec["code"] == "00":
+            balance = dec["accountDetail"]["availBalance"]
+            if format == int:
+                balance = int(balance.replace(",","").replace(".",""))
+            return {
+                "code" : dec["code"],
+                "status" : True,
+                "balance" : balance,
+                "full_content" : dec
+            }
+        
+        elif dec["code"] in ["108", "917"]:
+            self._login()
+            return self._get_account_balance(format=format)
+        
+        return {
+            "status" : False,
+            "code" : dec["code"],
+            "full_content" : dec
+        }
+
+    def _transaction_history(self, from_date: str ="", to_date: str = "", page_index: int = 0) -> json:
+        """
+        lay danh sach lich su giao dich
+        "fromDate": "12/05/2025",
+        "toDate": "19/05/2025",
+        """
+        history = []
+        response = self.session.post(
+            url = "https://digiapp.vietcombank.com.vn/bank-service/v1/transaction-history", 
+            json=encrypt_request(
+            data = self._get_default_json(
+                {
+                    "mid" : self.mid["transaction_history"],
+                    "lengthInPage": 10,
+                    "pageIndex": page_index,
+                    "fromDate": from_date,
+                    "toDate": to_date,
+                }
+            ), 
+            client_pub_key_str=self.public_key, 
+            server_pub_key_base64=LOCAL["publicKey"]
+            ), 
+            headers = self._post_headers()
+        ).json()
+
+        dec = decrypt_response(response, self.private_key)
+        if dec["code"] == "00":
+            return {
+                "code" : dec["code"],
+                "status" : True,
+                "history" : dec["transactions"],
+                "next_index" : dec["nextIndex"]
+            }
+        
+        elif dec["code"] in ["108", "917"]:
+            self._login()
+            return self._transaction_history(from_date, to_date)
+        
+        return {
+            "status" : False,
+            "code" : dec["code"],
+            "full_content" : dec
+        }
+
+    def get_full_transation_history(self, from_date: str = "", to_date: str = ""):
+        """lay tat ca danh sach lich su giao dich"""
+        if not self.is_login:
+            raise Exception(f"Cannot login! : {self.login_logs}")
+        
+        def initalizing_response(data: dict = {}) -> list:
+            if data["status"]:return data["history"]
+            return []
+        
+        page_index = 0
+        history = []
+        while True:
+            page_data = self._transaction_history(from_date, to_date, page_index)
+            if int(page_data["next_index"]) == 1:
+                transactions = initalizing_response(page_data)
+            else:
+                break
+            history.extend(transactions)
+            page_index += 1
+        return {
+            "code" : "00",
+            "status" : True,
+            "history" : history
+        }
+    
+if __name__ == "__main__":
+    userdata = json.loads(open("config/user.json", "r", encoding="utf-8").read())
+    username, password, browser_id = userdata["username"], userdata["password"], userdata["browser_id"]
+    
+    print(
+        VCB(
+            username=username, 
+            password=password, 
+            browserID=browser_id
+        ).get_full_transation_history(*get_date())#._nquiry_holdername("<banknumber>", BANK_CODE().MB["bankcode"])#_get_account_balance()
+    )
+
+
+
+================================================
+FILE: requirements.txt
+================================================
+Flask==2.2.5
+curl_cffi==0.10.0
+pycryptodome==3.21.0
+crcmod==1.7
+tensorflow==2.19.0
+opencv-python==4.12.0.88
+pillow==11.3.0
+
+
+
+================================================
+FILE: browserid/index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="css/fingerprint.css" />
+  <link rel="icon" href="https://i.pinimg.com/736x/1c/54/f7/1c54f7b06d7723c21afc5035bf88a5ef.jpg" type="image/png">
+  <title>Fingerprint</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Get BrowserID Page</h1>
+    <div class="info-box" id="site-info">
+      - Đây là trang lấy BrowserID <br>
+      - Đảm bảo site được mở dưới giao thức https <br>
+      - Giá trị này được sử dụng để xử lý session đã đăng nhập bank của trình duyệt <br>
+      - Lưu ý: Không được bỏ trống hoặc điền sai BrowserID! <br>
+      - Nếu không có hosting, truy cập link sau để lấy BrowserID chuẩn: 
+        <a href="https://bank-task-s1s5.onrender.com/get_browser_id" target="_blank">Click here</a>
+    </div>
+    <div class="visitor-box">
+      <span class="visitor-label">Visitor ID:</span>
+      <span class="visitor-id" id="visitor-id">Đang lấy...</span>
+      <button class="copy-btn" id="copy-btn">Copy</button>
+      <span class="copied-msg" id="copied-msg">Đã copy!</span>
+    </div>
+  </div>
+<script src="https://openfpcdn.io/fingerprintjs/v3/iife.min.js"></script>
+<script src="js/fingerprint.js"></script>
+</body>
+</html>
+
+
+================================================
+FILE: browserid/index.py
+================================================
+__import__("webbrowser").open("https://bank-task-s1s5.onrender.com/get_browser_id")
+
+
+================================================
+FILE: browserid/css/fingerprint.css
+================================================
+body {
+    background: #f6f8fa;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 420px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    padding: 32px 24px 24px 24px;
+}
+h1 {
+    font-size: 1.5em;
+    margin-bottom: 18px;
+    color: #0984e3;
+    text-align: center;
+}
+.visitor-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f1f7ff;
+    border: 1.5px solid #d6eaff;
+    border-radius: 8px;
+    padding: 18px 14px;
+    margin-bottom: 18px;
+    justify-content: space-between;
+}
+.visitor-label {
+    font-weight: 500;
+    color: #555;
+    margin-right: 8px;
+}
+.visitor-id {
+    font-family: 'Fira Mono', 'Consolas', monospace;
+    font-size: 1.08em;
+    color: #222;
+    background: #eaf6ff;
+    padding: 4px 8px;
+    border-radius: 5px;
+    word-break: break-all;
+    flex: 1 1 auto;
+    margin-right: 8px;
+}
+.copy-btn {
+    background: #0984e3;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.copy-btn:hover {
+    background: #065fa7;
+}
+.info-box {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px 14px;
+    color: #444;
+    font-size: 1em;
+    min-height: 60px;
+    margin-bottom: 8px;
+}
+.copied-msg {
+    color: #27ae60;
+    font-size: 0.98em;
+    margin-left: 8px;
+    display: none;
+}
+
+
+================================================
+FILE: browserid/js/fingerprint.js
+================================================
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + days*24*60*60*1000);
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+async function getFingerprint() {
+    const fpPromise = FingerprintJS.load({ monitoring: !1 });
+    const fp = await fpPromise;
+    const result = await fp.get();
+    setCookie("visitorId", result.visitorId, 7);
+    document.getElementById('visitor-id').textContent = result.visitorId;
+}
+getFingerprint();
+document.getElementById('copy-btn').onclick = function() {
+    const visitorId = document.getElementById('visitor-id').textContent;
+    navigator.clipboard.writeText(visitorId).then(function() {
+    const msg = document.getElementById('copied-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 1200);
+    });
+};
+
+
+================================================
+FILE: config/user.json
+================================================
+{
+    "username" : "<your_username>",
+    "password" : "<your_password>",
+    "browser_id" : "<your_browser_id>"
+}
+
+
+================================================
+FILE: model/app.py
+================================================
+from flask import Flask, request, jsonify
+import tensorflow as tf
+import keras
+from keras.layers import LSTM
+from keras.activations import relu
+import numpy as np
+import cv2
+import os
+from utils import preprocess_image, decode_prediction
+import base64
+from PIL import Image
+import io
+import urllib
+
+app = Flask(__name__)
+@keras.saving.register_keras_serializable()
+class FixedLSTM(LSTM):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop("time_major", None)
+        super().__init__(*args, **kwargs)
+
+custom_objects = {
+    "LSTM": FixedLSTM,
+    "leaky_relu": tf.nn.leaky_relu,
+}
+
+with keras.saving.custom_object_scope(custom_objects):
+    model = keras.models.load_model("captcha_model.h5")
+
+img_width   = 160
+img_height  = 60
+max_length  = 5 
+characters  = [' ', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+char_to_num = keras.layers.StringLookup(vocabulary=list(characters), mask_token=None)
+num_to_char = keras.layers.StringLookup(vocabulary=char_to_num.get_vocabulary(), mask_token=None, invert=True)
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    """
+    data = {
+        "data": b64 or link_img
+    }
+    """
+    data = request.get_json()
+    if not data or "data" not in data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    image_data = data["data"]
+
+    if image_data.startswith("data:image/jpeg;base64,"):
+        image_data  = image_data.replace("data:image/jpeg;base64,", "")
+        image_data  = base64.b64decode(image_data)
+        image       = Image.open(io.BytesIO(image_data))
+        image       = np.array(image.convert("L"))
+
+    elif image_data.startswith("http"):
+        image = Image.open(urllib.request.urlopen(image_data))
+        image = np.array(image.convert("L"))
+
+    image           = preprocess_image(image, img_width, img_height)
+    image_tensor    = tf.convert_to_tensor(image, dtype=tf.float32)
+    image_tensor    = tf.expand_dims(image_tensor, axis=0)  # Thêm batch
+    preds           = model.predict(image_tensor)
+    result_text     = decode_prediction(preds, num_to_char, max_length)
+
+    return jsonify({"result": result_text})
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=False)
+
+
+
+================================================
+FILE: model/example.py
+================================================
+import requests
+import base64
+
+image_path = "<your_captcha_image_path>"
+
+url = "http://127.0.0.1:5000/predict"
+js = {"data" : f"data:image/jpeg;base64,{base64.b64encode(open(image_path, 'rb').read()).decode()}"}
+
+response = requests.post(url, json=js)
+
+if response.status_code == 200:
+    print("Prediction:", response.json()["result"])
+else:
+    print("Error:", response.status_code, response.text)
+
+
+
+================================================
+FILE: model/utils.py
+================================================
+import cv2
+import numpy as np
+import tensorflow as tf
+
+def preprocess_image(img, img_width, img_height):
+    img = cv2.resize(img, (img_width, img_height))
+    img = img.astype("float32") / 255.0
+    img = img.T
+    img = np.expand_dims(img, axis=-1)
+    return img
+
+
+def decode_prediction(preds, num_to_char, max_length) -> str:
+    input_len = np.ones(preds.shape[0]) * preds.shape[1]
+    results = tf.keras.backend.ctc_decode(preds, input_length=input_len, greedy=True)[0][0][:, :max_length]
+
+    output_text = []
+    for res in results:
+        text = tf.strings.reduce_join(num_to_char(res)).numpy().decode("utf-8")
+        output_text.append(text)
+
+    return output_text[0] if output_text else ""
+
+
+
+================================================
+FILE: utils/__init__.py
+================================================
+from .captcha_solving import *
+from ._algorithm import *
+from ._params import *
+
+
+================================================
+FILE: utils/_algorithm.py
+================================================
+from curl_cffi import requests
+import base64
+import os
+import json
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES, PKCS1_v1_5
+from Crypto.Util import Counter
+from Crypto.Random import get_random_bytes
+from Crypto import Random
+from datetime import datetime, timezone, timedelta
+from time import time
+from random import random
+import crcmod
+import hashlib
+VN_TZ = timezone(timedelta(hours=7))
+
+#static
+LOCAL = {
+    "name": "production",
+    "production": True,
+    "manifestPath": "/assets/module-federation.manifest.production.json",
+    "mobileCallUrl": "https://callapi-iframe.vietcombank.com.vn/",
+    "apiUrl": "https://digiapp.vietcombank.com.vn",
+    "mediaBaseUrl": "https://digibankm5.vietcombank.com.vn/get_file",
+    "uploadAvatarUrl": "https://digibankm5.vietcombank.com.vn/upfile/avatar_upload",
+    "removeAvatarUrl": "https://digibankm5.vietcombank.com.vn/contact/remove_my_avatar",
+    "uploadAES": "2dcd8b543bd95a83",
+    "uploadHMac": "94280a1454bc5634a33181125fcedc08",
+    "token": "dmNiOjI3YWNkNDM1YmRiMjU5NTRhY2Q2NDliNmE1MTNmYmI5",
+    "publicKey": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFpa3FRckl6WkprVXZIaXNqZnU1WkNOK1RMeS8vNDNDSWM1aEpFNzA5VElLM0hiY0M5dnVjMitQUEV0STZwZVNVR3FPbkZvWU93bDNpOHJSZFNhSzE3RzJSWk4wMU1JcVJJSi82YWM5SDRMMTFkdGZRdFI3S0hxRjdLRDBmajZ2VTRrYjUrMGN3UjNSdW1CdkRlTWxCT2FZRXBLd3VFWTlFR3F5OWJjYjVFaE5HYnh4TmZiVWFvZ3V0VndHNUMxZUtZSXR6YVlkNnRhbzNncTdzd05IN3A2VWRsdHJDcHhTd0ZFdmM3ZG91RTJzS3JQRHA4MDdaRzJkRnNsS3h4bVI0V0hESFdmSDBPcHpyQjVLS1dRTnl6WHhUQlhlbHFyV1pFQ0xSeXBOcTdQKzFDeWZnVFNkUTM1ZmRPN00xTW5pU0JUMVYzM0xkaFhvNzMvOXFENWU1VlFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t",
+    "pciEndpoint": "https://iframe.vietcombank.com.vn",
+    "secretKey": "79a96ccb09b127f81a0f48c23ef7c084e5132862a39c643c3964b6bd24e98685",
+    "crcKey": "6q93-@u9",
+    "uploadRemittanceUrl": "https://uploadgw.vietcombank.com.vn",
+    "downloadRemittanceUrl": "https://downloadgw-cde.vietcombank.com.vn",
+    "insightEndpoint": "https://vcbinsight.vietcombank.com.vn",
+    "storeKey": {
+        "HERCU": "vcb.hercu"
+    },
+    "vdn": {
+        "MASS_VI": "5301",
+        "MASS_VI_ERROR": "5302",
+        "MASS_EN": "5303",
+        "VIP_VI": "5304",
+        "VIP_EN": "5305"
+    },
+    "loyaltyRewards": "https://loyalty.vietcombank.com.vn/portal-web/"
+}
+
+def get_date() -> tuple:
+    """
+    Trả về tuple (from_date, to_date) dạng 'dd/mm/yyyy'.
+    from_date: 30 ngày trước hôm nay
+    to_date: hôm nay
+    """
+    now = datetime.now(VN_TZ)
+    to_date = now.strftime("%d/%m/%Y")
+    from_date = (now - timedelta(days=30)).strftime("%d/%m/%Y")
+    return from_date, to_date
+
+def gen_keys() -> tuple:
+    key = RSA.generate(1024)
+    private_key = key.export_key().decode()
+    public_key = key.publickey().export_key().decode().replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replace("\n", "")
+    return private_key, public_key
+
+def aes_encrypt(data: str, key: str, iv: str) -> bytes:
+    ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
+    cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+    return cipher.encrypt(data)
+
+def aes_decrypt(ciphertext: bytes, key: str, iv: str) -> str:
+    ctr = Counter.new(128, initial_value=int.from_bytes(iv, byteorder='big'))
+    cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
+    return cipher.decrypt(ciphertext)
+
+def encrypt_request(data: dict, client_pub_key_str: str, server_pub_key_base64: str) -> dict:
+    try:
+        m = get_random_bytes(32) 
+        O = get_random_bytes(16) 
+        f = {
+            "clientPubKey": client_pub_key_str,
+            **data
+        }
+        cipher = AES.new(m, AES.MODE_CTR, nonce=b'', initial_value=O)
+        plaintext = json.dumps(f).encode("utf-8")
+        ciphertext = cipher.encrypt(plaintext)
+        encrypted_data = O + ciphertext
+        d_base64 = base64.b64encode(encrypted_data).decode()
+        server_pub_key_pem = base64.b64decode(server_pub_key_base64).decode()
+        rsa_key = RSA.importKey(server_pub_key_pem)
+        cipher_rsa = PKCS1_v1_5.new(rsa_key)
+        encrypted_key = cipher_rsa.encrypt(base64.b64encode(m))
+        k_base64 = base64.b64encode(encrypted_key).decode()
+        return {
+            "d": d_base64,
+            "k": k_base64
+        }
+
+    except Exception as e:
+        print("Encryption error:", e)
+        return {
+            "d": "",
+            "k": ""
+        }
+    
+def decrypt_response(enc_obj: dict, private_key_pem: str) -> dict:
+    k = base64.b64decode(enc_obj["k"])
+    d = base64.b64decode(enc_obj["d"])
+    rsa_key = RSA.import_key(private_key_pem)
+    cipher_rsa = PKCS1_v1_5.new(rsa_key)
+    sentinel = Random.new().read(15)
+    aes_key_base64 = cipher_rsa.decrypt(k, sentinel)
+    aes_key = base64.b64decode(aes_key_base64)
+    iv = d[:16]
+    data = d[16:]
+    decrypted_data = aes_decrypt(data, aes_key, iv)
+    return json.loads(decrypted_data.decode())
+
+def x_lim_id(params):
+    hash_obj = hashlib.sha256((params + LOCAL["crcKey"]).encode())
+    W = hash_obj.hexdigest() 
+
+    return W
+
+def x_requests_id(params):
+    millis = str(int(time() * 1000)) 
+    rand = str(int(random() * 100)) 
+    crc16 = crcmod.predefined.mkCrcFun('crc-16')
+    crc_val = format(crc16(params.encode()), 'x') 
+    U = millis + rand + crc_val
+    return U
+
+
+
+
+================================================
+FILE: utils/_params.py
+================================================
+class BANK_CODE:
+    def __init__(self):
+        self.VIETCOMBANK = {"fullname": "Ngân hàng TMCP Ngoại Thương Việt Nam", "bankcode": "970436", "sub_name": "NGÂN HÀNG TMCP NGOẠI THƯƠNG VIỆT NAM"}
+        self.BIDV = {"fullname": "Ngân hàng Đầu tư và phát triển Việt Nam", "bankcode": "970418", "sub_name": "NGÂN HÀNG ĐẦU TƯ VÀ PHÁT TRIỂN VIỆT NAM"}
+        self.VIETINBANK = {"fullname": "Ngân hàng Công Thương Việt Nam", "bankcode": "970415", "sub_name": "NGÂN HÀNG CÔNG THƯƠNG VIỆT NAM"}
+        self.AGRIBANK = {"fullname": "Ngân hàng Nông nghiệp và phát triển nông thôn Việt Nam", "bankcode": "970405", "sub_name": "NGÂN HÀNG NÔNG NGHIỆP VÀ PHÁT TRIỂN NÔNG THÔN VIỆT NAM"}
+        self.ABBANK = {"fullname": "Ngân hàng An Bình", "bankcode": "970425", "sub_name": "NGÂN HÀNG AN BÌNH"}
+        self.ACB = {"fullname": "Ngân hàng Á Châu", "bankcode": "970416", "sub_name": "NGÂN HÀNG Á CHÂU"}
+        self.ANZ = {"fullname": "Ngân hàng TNHH Một Thành Viên ANZ Việt Nam", "bankcode": "01602002", "sub_name": "NGÂN HÀNG TNHH MỘT THÀNH VIÊN ANZ VIỆT NAM"}
+        self.BAC_A_BANK = {"fullname": "Ngân hàng Bắc Á", "bankcode": "970409", "sub_name": "NGÂN HÀNG BẮC Á"}
+        self.BANGKOK_BANK_TPHCM = {"fullname": "Ngân hàng Bangkok Bank - CN TP Hồ Chí Minh", "bankcode": "79612001", "sub_name": "NGÂN HÀNG BANGKOK BANK - CN TP HỒ CHÍ MINH"}
+        self.BANGKOK_BANK_HN = {"fullname": "Ngân hàng Bangkok Bank - CN Hà Nội", "bankcode": "01667001", "sub_name": "NGÂN HÀNG BANGKOK BANK - CN HÀ NỘI"}
+        self.BAO_VIET_BANK = {"fullname": "Ngân hàng Bảo Việt", "bankcode": "970438", "sub_name": "NGÂN HÀNG BẢO VIỆT"}
+        self.BFCE = {"fullname": "Ngân hàng BPCE IOM", "bankcode": "79601001", "sub_name": "NGÂN HÀNG BPCE IOM"}
+        self.BIDC_TPHCM = {"fullname": "Ðầu Tư và Phát Triển Campuchia - CN TP Hồ Chí Minh", "bankcode": "79648001", "sub_name": "ÐẦU TƯ VÀ PHÁT TRIỂN CAMPUCHIA - CN TP HỒ CHÍ MINH"}
+        self.BIDC_HN = {"fullname": "Ðầu Tư và Phát Triển Campuchia - CN Hà Nội", "bankcode": "555666", "sub_name": "ÐẦU TƯ VÀ PHÁT TRIỂN CAMPUCHIA - CN HÀ NỘI"}
+        self.BNK = {"fullname": "Ngân hàng Busan", "bankcode": "79660001", "sub_name": "NGÂN HÀNG BUSAN"}
+        self.BNP_PARIBAS_HCM_TPHCM = {"fullname": "Ngân hàng BNP Paribas – CN TP Hồ Chí Minh", "bankcode": "963666", "sub_name": "NGÂN HÀNG BNP PARIBAS – CN TP HỒ CHÍ MINH"}
+        self.BNP_PARIBAS_HN_HN = {"fullname": "Ngân hàng BNP Paribas – CN Hà Nội", "bankcode": "963668", "sub_name": "NGÂN HÀNG BNP PARIBAS – CN HÀ NỘI"}
+        self.BOCHK_TPHCM = {"fullname": "Ngân hàng Bank of China (Hongkong) Limited – CN TP Hồ Chí Minh", "bankcode": "963688", "sub_name": "NGÂN HÀNG BANK OF CHINA (HONGKONG) LIMITED – CN TP HỒ CHÍ MINH"}
+        self.BOCOM = {"fullname": "Ngân hàng Bank of Communications Co., Ltd", "bankcode": "79615001", "sub_name": "NGÂN HÀNG BANK OF COMMUNICATIONS CO., LTD"}
+        self.BOI_BANK_OF_INDIA = {"fullname": "Ngân hàng Bank of India", "bankcode": "79659001", "sub_name": "NGÂN HÀNG BANK OF INDIA"}
+        self.BSP = {"fullname": "Ngân hàng SINOPAC", "bankcode": "79632001", "sub_name": "NGÂN HÀNG SINOPAC"}
+        self.BVBANK_TIMO = {"fullname": "Ngân hàng số Timo - Ngân hàng TMCP Bản Việt", "bankcode": "963388", "sub_name": "NGÂN HÀNG SỐ TIMO - NGÂN HÀNG TMCP BẢN VIỆT"}
+        self.CAKE = {"fullname": "Ngân hàng CAKE BY VPBANK", "bankcode": "546034", "sub_name": "NGÂN HÀNG CAKE BY VPBANK"}
+        self.VCBNEO = {"fullname": "Ngân hàng TM TNHH Một Thành Viên Ngoại thương Công nghệ số", "bankcode": "970444", "sub_name": "NGÂN HÀNG TM TNHH MỘT THÀNH VIÊN NGOẠI THƯƠNG CÔNG NGHỆ SỐ"}
+        self.CCB = {"fullname": "Ngân hàng Xây dựng Trung Quốc", "bankcode": "79611001", "sub_name": "NGÂN HÀNG XÂY DỰNG TRUNG QUỐC"}
+        self.CIMB = {"fullname": "Ngân hàng TNHH MTV CIMB Việt\xa0Nam", "bankcode": "422589", "sub_name": "NGÂN HÀNG TNHH MTV CIMB VIỆT\xa0NAM"}
+        self.CITIBANK_HN = {"fullname": "Ngân hàng Citibank Việt Nam - CN Hà Nội", "bankcode": "01605001", "sub_name": "NGÂN HÀNG CITIBANK VIỆT NAM - CN HÀ NỘI"}
+        self.CITIBANK = {"fullname": "Ngân hàng Citibank Việt Nam", "bankcode": "533948", "sub_name": "NGÂN HÀNG CITIBANK VIỆT NAM"}
+        self.CO_OPBANK = {"fullname": "Ngân hàng Hợp tác xã Việt Nam", "bankcode": "970446", "sub_name": "NGÂN HÀNG HỢP TÁC XÃ VIỆT NAM"}
+        self.CREDIT_AGRICOLE = {"fullname": "Ngân hàng Crédit Agricole Corporate and Investment - CN TP Hồ Chí Minh", "bankcode": "79621001", "sub_name": "NGÂN HÀNG CRÉDIT AGRICOLE CORPORATE AND INVESTMENT - CN TP HỒ CHÍ MINH"}
+        self.CTBC = {"fullname": "Ngân hàng TNHH CTBC", "bankcode": "79629001", "sub_name": "NGÂN HÀNG TNHH CTBC"}
+        self.CUB_CL = {"fullname": "Ngân hàng Cathay United - CN Chu Lai", "bankcode": "49634001", "sub_name": "NGÂN HÀNG CATHAY UNITED - CN CHU LAI"}
+        self.CUB_HCM_TPHCM = {"fullname": "Cathay United Bank – CN TP Hồ Chí Minh", "bankcode": "168999", "sub_name": "CATHAY UNITED BANK – CN TP HỒ CHÍ MINH"}
+        self.DBS = {"fullname": "Ngân hàng DBS - CN Hồ Chí Minh", "bankcode": "796500", "sub_name": "NGÂN HÀNG DBS - CN HỒ CHÍ MINH"}
+        self.DEUTSCHE_BANK = {"fullname": "Ngân hàng DEUTSCHE BANK", "bankcode": "79619001", "sub_name": "NGÂN HÀNG DEUTSCHE BANK"}
+        self.DGB_DAEGU_CN_HCM_TPHCM = {"fullname": "Ngân hàng Daegu - CN TP Hồ Chí Minh", "bankcode": "79668001", "sub_name": "NGÂN HÀNG DAEGU - CN TP HỒ CHÍ MINH"}
+        self.VIKKI_BANK = {"fullname": "Ngân hàng Trách nhiệm hữu hạn Một thành viên số Vikki", "bankcode": "970406", "sub_name": "NGÂN HÀNG TRÁCH NHIỆM HỮU HẠN MỘT THÀNH VIÊN SỐ VIKKI"}
+        self.ESB = {"fullname": "Ngân hàng E.SUN BANK", "bankcode": "75658001", "sub_name": "NGÂN HÀNG E.SUN BANK"}
+        self.EXIMBANK = {"fullname": "Ngân hàng Xuất Nhập khẩu", "bankcode": "970431", "sub_name": "NGÂN HÀNG XUẤT NHẬP KHẨU"}
+        self.FIRSTBANK_HN = {"fullname": "Ngân hàng First Commercial Bank - CN Hà Nội", "bankcode": "01608001", "sub_name": "NGÂN HÀNG FIRST COMMERCIAL BANK - CN HÀ NỘI"}
+        self.FIRSTBANK_TPHCM = {"fullname": "Ngân hàng First Commercial Bank - CN TP Hồ Chí Minh", "bankcode": "79630001", "sub_name": "NGÂN HÀNG FIRST COMMERCIAL BANK - CN TP HỒ CHÍ MINH"}
+        self.GPBANK = {"fullname": "Ngân hàng Dầu khí toàn cầu", "bankcode": "970408", "sub_name": "NGÂN HÀNG DẦU KHÍ TOÀN CẦU"}
+        self.HANOI_ABC_HN = {"fullname": "Ngân hàng Agricultural Bank of China Limited - CN Hà Nội", "bankcode": "01664001", "sub_name": "NGÂN HÀNG AGRICULTURAL BANK OF CHINA LIMITED - CN HÀ NỘI"}
+        self.HD_BANK = {"fullname": "Ngân hàng Phát triển TP.HCM", "bankcode": "970437", "sub_name": "NGÂN HÀNG PHÁT TRIỂN TP.HCM"}
+        self.HLBVN = {"fullname": "Ngân hàng HongLeong Việt Nam", "bankcode": "970442", "sub_name": "NGÂN HÀNG HONGLEONG VIỆT NAM"}
+        self.HSBC = {"fullname": "Ngân hàng TNHH MTV HSBC Việt Nam", "bankcode": "458761", "sub_name": "NGÂN HÀNG TNHH MTV HSBC VIỆT NAM"}
+        self.HUA_NAN_TPHCM = {"fullname": "Ngân hàng Hua Nam Commercial Bank, Ltd  - CN TP Hồ Chí Minh", "bankcode": "79640001", "sub_name": "NGÂN HÀNG HUA NAM COMMERCIAL BANK, LTD  - CN TP HỒ CHÍ MINH"}
+        self.IBK_BANK_HN_HN = {"fullname": "Ngân hàng Công nghiệp Hàn Quốc  - CN Hà Nội", "bankcode": "970455", "sub_name": "NGÂN HÀNG CÔNG NGHIỆP HÀN QUỐC  - CN HÀ NỘI"}
+        self.IBK_HCM_TPHCM = {"fullname": "Ngân hàng Công nghiệp Hàn Quốc - CN TP Hồ Chí Minh", "bankcode": "970456", "sub_name": "NGÂN HÀNG CÔNG NGHIỆP HÀN QUỐC - CN TP HỒ CHÍ MINH"}
+        self.ICBC = {"fullname": "Ngân hàng Công Thương Trung Quốc", "bankcode": "01649001", "sub_name": "NGÂN HÀNG CÔNG THƯƠNG TRUNG QUỐC"}
+        self.IVB = {"fullname": "\xa0Ngân hàng TNHH Indovina", "bankcode": "970434", "sub_name": "\xa0NGÂN HÀNG TNHH INDOVINA"}
+        self.J_P_MORGAN = {"fullname": "Ngân hàng JPMorgan Chase, N.A.", "bankcode": "79627001", "sub_name": "NGÂN HÀNG JPMORGAN CHASE, N.A."}
+        self.KB_HCM_TPHCM = {"fullname": "Ngân hàng Ngân hàng Kookmin - CN TP Hồ Chí Minh", "bankcode": "970463", "sub_name": "NGÂN HÀNG NGÂN HÀNG KOOKMIN - CN TP HỒ CHÍ MINH"}
+        self.KB_HN_HN = {"fullname": "Ngân hàng Kookmin - CN Hà Nội", "bankcode": "970462", "sub_name": "NGÂN HÀNG KOOKMIN - CN HÀ NỘI"}
+        self.KBANK_TPHCM = {"fullname": "Ngân hàng đại chúng TNHH KASIKORNBANK - CN TP Hồ Chí Minh", "bankcode": "79669001", "sub_name": "NGÂN HÀNG ĐẠI CHÚNG TNHH KASIKORNBANK - CN TP HỒ CHÍ MINH"}
+        self.KEB_HANA_HN = {"fullname": "Ngân hàng KEB HANA – CN Hà Nội", "bankcode": "970467", "sub_name": "NGÂN HÀNG KEB HANA – CN HÀ NỘI"}
+        self.KEB_HANA_TPHCM = {"fullname": "Ngân hàng KEB HANA  - CN TP Hồ Chí Minh", "bankcode": "79656001", "sub_name": "NGÂN HÀNG KEB HANA  - CN TP HỒ CHÍ MINH"}
+        self.KIEN_LONG_BANK = {"fullname": "Ngân hàng Kiên Long", "bankcode": "970452", "sub_name": "NGÂN HÀNG KIÊN LONG"}
+        self.LPBANK = {"fullname": "Ngân hàng TMCP Lộc Phát Việt Nam", "bankcode": "970449", "sub_name": "NGÂN HÀNG TMCP LỘC PHÁT VIỆT NAM"}
+        self.LIOBANK = {"fullname": "Ngân hàng số Liobank – Ngân hàng TMCP Phương Đông", "bankcode": "963369", "sub_name": "NGÂN HÀNG SỐ LIOBANK – NGÂN HÀNG TMCP PHƯƠNG ĐÔNG"}
+        self.MAFC = {"fullname": "Công ty Tài chính TNHH MTV Mirae Asset Việt Nam", "bankcode": "977777", "sub_name": "CÔNG TY TÀI CHÍNH TNHH MTV MIRAE ASSET VIỆT NAM"}
+        self.MB = {"fullname": "Ngân hàng Quân Đội", "bankcode": "970422", "sub_name": "NGÂN HÀNG QUÂN ĐỘI"}
+        self.MAYBANK_HANOI_HN = {"fullname": "Ngân hàng Malayan Banking Berhad - CN Hà Nội", "bankcode": "01609001", "sub_name": "NGÂN HÀNG MALAYAN BANKING BERHAD - CN HÀ NỘI"}
+        self.MAYBANK_HCMC = {"fullname": "Ngân hàng Malayan Banking Berhad TP. Hồ Chí Minh", "bankcode": "79635001", "sub_name": "NGÂN HÀNG MALAYAN BANKING BERHAD TP. HỒ CHÍ MINH"}
+        self.MEGA_ICBC_TPHCM = {"fullname": "Ngân hàng Mega International Commercial Bank Co., Ltd  - CN TP Hồ Chí Minh", "bankcode": "79623001", "sub_name": "NGÂN HÀNG MEGA INTERNATIONAL COMMERCIAL BANK CO., LTD  - CN TP HỒ CHÍ MINH"}
+        self.MIZUHO_HN = {"fullname": "Ngân hàng Mizuho Bank, LTd - Chi nhánh Hà Nội", "bankcode": "01613001", "sub_name": "NGÂN HÀNG MIZUHO BANK, LTD - CHI NHÁNH HÀ NỘI"}
+        self.MIZUHO = {"fullname": "Ngân hàng Mizuho Bank, LTd", "bankcode": "79639001", "sub_name": "NGÂN HÀNG MIZUHO BANK, LTD"}
+        self.MSB = {"fullname": "Ngân hàng Hàng Hải", "bankcode": "970426", "sub_name": "NGÂN HÀNG HÀNG HẢI"}
+        self.MUFG_TPHCM = {"fullname": "Ngân hàng MUFG Bank. Ltd - CN TP Hồ Chí Minh", "bankcode": "79622001", "sub_name": "NGÂN HÀNG MUFG BANK. LTD - CN TP HỒ CHÍ MINH"}
+        self.MUFG_HN = {"fullname": "Ngân hàng MUFG Bank. Ltd – Chi Nhánh Hà Nội", "bankcode": "01653001", "sub_name": "NGÂN HÀNG MUFG BANK. LTD – CHI NHÁNH HÀ NỘI"}
+        self.NAM_A_BANK = {"fullname": "Ngân hàng Nam Á", "bankcode": "970428", "sub_name": "NGÂN HÀNG NAM Á"}
+        self.NAPAS = {"fullname": "Công ty Cổ phần Thanh toán Quốc gia Việt Nam", "bankcode": "971100", "sub_name": "CÔNG TY CỔ PHẦN THANH TOÁN QUỐC GIA VIỆT NAM"}
+        self.NCB = {"fullname": "Ngân hàng Quốc Dân", "bankcode": "970419", "sub_name": "NGÂN HÀNG QUỐC DÂN"}
+        self.NONGHUYP_HN = {"fullname": "Ngân hàng Nonghuyp - Chi nhánh Hà Nội", "bankcode": "801011", "sub_name": "NGÂN HÀNG NONGHUYP - CHI NHÁNH HÀ NỘI"}
+        self.OCB = {"fullname": "Ngân hàng Phương Đông", "bankcode": "970448", "sub_name": "NGÂN HÀNG PHƯƠNG ĐÔNG"}
+        self.OCBC_TPHCM = {"fullname": "Ngân hàng Oversea-Chinese Banking Corporation LTD  - CN TP Hồ Chí Minh", "bankcode": "79625001", "sub_name": "NGÂN HÀNG OVERSEA-CHINESE BANKING CORPORATION LTD  - CN TP HỒ CHÍ MINH"}
+        self.MBV = {"fullname": "NH TNHH MTV Việt Nam Hiện Đại", "bankcode": "970414", "sub_name": "NH TNHH MTV VIỆT NAM HIỆN ĐẠI"}
+        self.PBVN = {"fullname": "Ngân hàng TNHH MTV Public Viet Nam", "bankcode": "970439", "sub_name": "NGÂN HÀNG TNHH MTV PUBLIC VIET NAM"}
+        self.PGBANK = {"fullname": "Ngân hàng TMCP Thịnh vượng và Phát triển (PGBANK)", "bankcode": "970430", "sub_name": "NGÂN HÀNG TMCP THỊNH VƯỢNG VÀ PHÁT TRIỂN (PGBANK)"}
+        self.PVCOMBANK = {"fullname": "Ngân hàng Đại chúng", "bankcode": "970412", "sub_name": "NGÂN HÀNG ĐẠI CHÚNG"}
+        self.SACOMBANK = {"fullname": "Ngân hàng Sài Gòn thương tín", "bankcode": "970403", "sub_name": "NGÂN HÀNG SÀI GÒN THƯƠNG TÍN"}
+        self.SAIGONBANK = {"fullname": "Ngân hàng Sài Gòn Công Thương", "bankcode": "970400", "sub_name": "NGÂN HÀNG SÀI GÒN CÔNG THƯƠNG"}
+        self.SCB = {"fullname": "Ngân hàng Sài Gòn", "bankcode": "970429", "sub_name": "NGÂN HÀNG SÀI GÒN"}
+        self.SCB_TPHCM = {"fullname": "Ngân hàng The Siam Commercial Bank Public Company Limited  - CN TP Hồ Chí Minh", "bankcode": "79600001", "sub_name": "NGÂN HÀNG THE SIAM COMMERCIAL BANK PUBLIC COMPANY LIMITED  - CN TP HỒ CHÍ MINH"}
+        self.SCVN = {"fullname": "Ngân hàng TNHH MTV Standard Chartered Việt Nam", "bankcode": "970410", "sub_name": "NGÂN HÀNG TNHH MTV STANDARD CHARTERED VIỆT NAM"}
+        self.SEABANK = {"fullname": "Ngân hàng Đông Nam Á", "bankcode": "970440", "sub_name": "NGÂN HÀNG ĐÔNG NAM Á"}
+        self.SHB_HN = {"fullname": "Ngân hàng Sài Gòn Hà Nội", "bankcode": "970443", "sub_name": "NGÂN HÀNG SÀI GÒN HÀ NỘI"}
+        self.SHINHAN = {"fullname": "Ngân hàng Shinhan Bank Việt Nam", "bankcode": "970424", "sub_name": "NGÂN HÀNG SHINHAN BANK VIỆT NAM"}
+        self.SMBC = {"fullname": "Ngân hàng Sumitomo Mitsui banking corporation", "bankcode": "01636001", "sub_name": "NGÂN HÀNG SUMITOMO MITSUI BANKING CORPORATION"}
+        self.SVFC = {"fullname": "Công ty Tài chính TNHH MTV Shinhan Việt Nam", "bankcode": "963368", "sub_name": "CÔNG TY TÀI CHÍNH TNHH MTV SHINHAN VIỆT NAM"}
+        self.TAIPEI_FUBON = {"fullname": "Ngân hàng Hua Nam Commercial Bank, Ltd  – Chi nhánh Bình Dương", "bankcode": "74655001", "sub_name": "NGÂN HÀNG HUA NAM COMMERCIAL BANK, LTD  – CHI NHÁNH BÌNH DƯƠNG"}
+        self.TAIPEI_FUBON_TPHCM = {"fullname": "Ngân hàng Taipei Fubon Commercial Bank Co., Ltd  - CN TP Hồ Chí Minh", "bankcode": "79651001", "sub_name": "NGÂN HÀNG TAIPEI FUBON COMMERCIAL BANK CO., LTD  - CN TP HỒ CHÍ MINH"}
+        self.TAIPEI_FUBONC_B = {"fullname": "Ngân hàng TAIPEI FUBON", "bankcode": "01642001", "sub_name": "NGÂN HÀNG TAIPEI FUBON"}
+        self.TECHCOMBANK = {"fullname": "Ngân hàng Kỹ thương Việt Nam", "bankcode": "970407", "sub_name": "NGÂN HÀNG KỸ THƯƠNG VIỆT NAM"}
+        self.TPBANK = {"fullname": "Ngân hàng Tiên phong", "bankcode": "970423", "sub_name": "NGÂN HÀNG TIÊN PHONG"}
+        self.UBANK = {"fullname": "Ngân hàng UBANK BY VPBANK", "bankcode": "546035", "sub_name": "NGÂN HÀNG UBANK BY VPBANK"}
+        self.UMEE = {"fullname": "Ngân hàng số UMEE by Kienlongbank", "bankcode": "963399", "sub_name": "NGÂN HÀNG SỐ UMEE BY KIENLONGBANK"}
+        self.UOB_VIETNAM = {"fullname": "Ngân hàng TNHH MTV UOB Việt Nam", "bankcode": "970458", "sub_name": "NGÂN HÀNG TNHH MTV UOB VIỆT NAM"}
+        self.VBSP = {"fullname": "Ngân hàng Chính sách Xã hội VBSP", "bankcode": "999888", "sub_name": "NGÂN HÀNG CHÍNH SÁCH XÃ HỘI VBSP"}
+        self.VDB = {"fullname": "Ngân hàng Phát triển Việt Nam", "bankcode": "01208001", "sub_name": "NGÂN HÀNG PHÁT TRIỂN VIỆT NAM"}
+        self.VIB = {"fullname": "Ngân hàng Quốc tế", "bankcode": "970441", "sub_name": "NGÂN HÀNG QUỐC TẾ"}
+        self.VIET_A_BANK = {"fullname": "Ngân hàng Việt Á", "bankcode": "970427", "sub_name": "NGÂN HÀNG VIỆT Á"}
+        self.VIET_CAPITAL_BANK = {"fullname": "Ngân hàng Bản Việt", "bankcode": "970454", "sub_name": "NGÂN HÀNG BẢN VIỆT"}
+        self.VIETBANK = {"fullname": "Ngân hàng Việt Nam Thương Tín", "bankcode": "970433", "sub_name": "NGÂN HÀNG VIỆT NAM THƯƠNG TÍN"}
+        self.VIETTEL_MONEY = {"fullname": "Viettel Money", "bankcode": "971005", "sub_name": "VIETTEL MONEY"}
+        self.VINASIAM_BANK = {"fullname": "Ngân hàng liên doanh Việt Thái - Chi nhánh Đồng Nai", "bankcode": "75504001", "sub_name": "NGÂN HÀNG LIÊN DOANH VIỆT THÁI - CHI NHÁNH ĐỒNG NAI"}
+        self.VNPT_MONEY = {"fullname": "VNPT Money", "bankcode": "971011", "sub_name": "VNPT MONEY"}
+        self.VPBANK = {"fullname": "Ngân hàng Việt Nam Thịnh Vượng", "bankcode": "970432", "sub_name": "NGÂN HÀNG VIỆT NAM THỊNH VƯỢNG"}
+        self.WOORI_BANK = {"fullname": "Ngân hàng Woori Việt Nam", "bankcode": "970457", "sub_name": "NGÂN HÀNG WOORI VIỆT NAM"}
+        self.WOORI_BANK_VIETNAM_TPHCM = {"fullname": "Ngân hàng TNHH MTV Woori Việt Nam - CN TP Hồ Chí Minh", "bankcode": "79637001", "sub_name": "NGÂN HÀNG TNHH MTV WOORI VIỆT NAM - CN TP HỒ CHÍ MINH"}
+        self.SCSB = {"fullname": "Ngân hàng The Shanghai Commercial & Savings Bank. Ltđ – CN Đồng Nai", "bankcode": "75606001", "sub_name": "NGÂN HÀNG THE SHANGHAI COMMERCIAL & SAVINGS BANK. LTĐ – CN ĐỒNG NAI"}
+        self.VIKKI_BY_HDBANK = {"fullname": "Kênh số hóa Vikki  – trực thuộc HDBank", "bankcode": "963311", "sub_name": "KÊNH SỐ HÓA VIKKI  – TRỰC THUỘC HDBANK"}
+        self.PVCOMBANK_PAY = {"fullname": "Ngân hàng số PVcombank", "bankcode": "971133", "sub_name": "NGÂN HÀNG SỐ PVCOMBANK"}
+
+
+
+
+================================================
+FILE: utils/captcha_solving.py
+================================================
+from ._algorithm import *
+
+def gen_captcha_token(e: int) -> str:
+    t = ""
+    for _ in range(e):
+        rand = int(65536 * (1 + os.urandom(1)[0] / 255))
+        hex_str = hex(rand)[2:].zfill(4)[1:]
+        t += hex_str
+    return t
+
+def create_guid() -> str:
+    return "-".join([
+        gen_captcha_token(2),
+        gen_captcha_token(1),
+        gen_captcha_token(1),
+        gen_captcha_token(1),
+        gen_captcha_token(3)
+    ])
+
+
+
+class Captcha:
+    def __init__(self, captcha_guid: str, proxies: dict = {}) -> None:
+        self.endpoint = "https://hngl2808-predict.hf.space" #"http://127.0.0.1:5000"#
+        self.guid = captcha_guid
+        self.session = requests.Session()
+        if proxies:
+            self.session.proxies.update(
+                {
+                    "http": proxies.get("http"),
+                    "https": proxies.get("https")
+                }
+            )
+        self.session.headers.update(self._headers())
+    
+    def _headers(self) -> dict:
+        return {
+            'accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'accept-language': 'vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5',
+            'cache-control': 'no-cache',
+            'dnt': '1',
+            'pragma': 'no-cache',
+            'priority': 'u=1, i',
+            'referer': 'https://vcbdigibank.vietcombank.com.vn/',
+            'sec-ch-ua': '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'image',
+            'sec-fetch-mode': 'no-cors',
+            'sec-fetch-site': 'same-site',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+        }
+    
+    def solving(self):
+        url = f"{self.endpoint}/predict"
+        images = self.session.get(
+            f"https://digiapp.vietcombank.com.vn/utility-service/v2/captcha/MASS/{self.guid}"
+        ).content
+        b64encimg = base64.b64encode(images).decode("utf-8")
+        js = {"data": f"data:image/jpeg;base64,{b64encimg}"}
+        response = self.session.post(url, json=js)
+        if response.status_code == 200:
+            return response.json()["result"]
+        else:
+            print("Error:", response.status_code, response.text)
+            return None
+
+
