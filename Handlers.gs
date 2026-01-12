@@ -341,6 +341,12 @@ function handleCallbackQuery(cb) {
  * @param {string|number} telegramId - Telegram ID
  */
 function setupReminder(cid, timeStr, telegramId) {
+  // Validate input
+  if (!timeStr) {
+    sendText(cid, t('invalid_time', telegramId) + "\nVD: `/remind 21:00`");
+    return;
+  }
+  
   // Validate format HH:MM
   var parts = timeStr.split(":");
   if (parts.length !== 2) { 
