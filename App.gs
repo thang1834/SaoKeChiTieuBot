@@ -139,11 +139,38 @@ function processDonations(txns) {
   var newLastId = lastId;
   var count = 0;
   
+  // Iterate from oldest to newest (if VCB returns sorted by date DESC, we need to process reverse? 
+  // Usually VCB returns newest first. So looping i = length-1 to 0 processes OLDEST first, which is correct for updating lastId.)
   for (var i = txns.length - 1; i >= 0; i--) {
      var t = txns[i];
-     if (compareTxnId(t.reference, lastId) > 0) {
-        if (t.dorc === 'C' || t.amount > 0) {
-            var amt = Number(String(t.amount).replace(/,/g, ''));
+     
+     // Normalize Keys (VCB returns capitalized keys: Reference, Amount, Description, CD, TransactionDate)
+     var ref = t.Reference || t.reference;
+     var rawAmount = t.Amount || t.amount || "0";
+     var desc = t.Description || t.description || "";
+     var dateStr = t.TransactionDate || t.transactionDate || t.tranDate; // "13/01/2026"
+     var cd = t.CD || t.dorc; // "+" or "C"
+     
+     if (compareTxnId(ref, lastId) > 0) {
+        // Parse Amount
+        var amt = 0;
+        if (typeof rawAmount === 'string') {
+            amt = parseFloat(rawAmount.replace(/,/g, ''));
+        } else {
+            amt = parseFloat(rawAmount);
+        }
+        
+        // Parse Date "dd/MM/yyyy"
+        var txnDate = new Date();
+        if (dateStr && dateStr.includes('/')) {
+            var parts = dateStr.split('/');
+            // yyyy, mm-1, dd
+            txnDate = new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        // Check if Income (Credit)
+        // CD="+" implies Credit (Incoming money)
+        if (cd === '+' || cd === 'C' || (cd === undefined && amt > 0)) {
             
             // Save to Income sheet (Admin)
             try {
@@ -154,7 +181,7 @@ function processDonations(txns) {
                   sheet = ss.insertSheet('Income');
                   sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú']);
                 }
-                sheet.appendRow([sheet.getLastRow(), new Date(t.transactionDate), amt, "Donate", t.description || "Bank Transfer"]);
+                sheet.appendRow([sheet.getLastRow(), txnDate, amt, "Donate", desc || "Bank Transfer"]);
               }
             } catch(e) {
               Logger.log("Save Donate Error: " + e);
@@ -162,15 +189,16 @@ function processDonations(txns) {
             
             // Send Thank You
             var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
-                        "💰 Số tiền: " + amt.toLocaleString() + " VNĐ\n" +
-                        "📝 Nội dung: " + t.description + "\n" +
-                        "⏰ Thời gian: " + t.transactionDate;
+                        "💰 Số tiền: " + formatMoney(amt) + "\n" +
+                        "📝 Nội dung: " + desc + "\n" +
+                        "⏰ Thời gian: " + dateStr;
             
             sendTelegramNotice(reply);
             count++;
         }
         
-        if (compareTxnId(t.reference, newLastId) > 0) newLastId = t.reference;
+        // Update newLastId
+        if (compareTxnId(ref, newLastId) > 0) newLastId = ref;
      }
   }
   
