@@ -36,7 +36,7 @@ Thay vì điền cứng Token vào code (không an toàn), chúng ta sẽ dùng 
 
 1.  Trong giao diện Apps Script, nhìn sang thanh bên trái, chọn **Cài đặt dự án (Project Settings)** (biểu tượng bánh răng ⚙️).
 2.  Kéo xuống phần **Thuộc tính tập lệnh (Script Properties)**.
-3.  Bấm **Thêm thuộc tính (Add script property)** và thêm lần lượt 3 dòng sau:
+3.  Bấm **Thêm thuộc tính (Add script property)** và thêm lần lượt các dòng sau:
 
 | Thuộc tính (Property) | Giá trị (Value) | Mô tả |
 | :--- | :--- | :--- |
@@ -44,11 +44,20 @@ Thay vì điền cứng Token vào code (không an toàn), chúng ta sẽ dùng 
 | `MY_CHAT_ID` | `12345678` | ID Telegram của bạn (để làm Admin). Chat với `@userinfobot` để lấy ID. |
 | `SHEET_ID` | `...` | (Tạm thời để trống hoặc tạo một Sheet mới rồi điền ID vào đây làm Database Master) |
 | `LANG` | `vi` | (Tùy chọn) `vi` cho tiếng Việt, `en` cho tiếng Anh |
+| `VCB_USER` | `09xxxxxxxxx` | (VCB) Số điện thoại đăng nhập VCB DigiBank |
+| `VCB_PASS` | `password` | (VCB) Mật khẩu VCB DigiBank |
+| `VCB_ACC` | `9999999999` | (VCB) Số tài khoản ngân hàng |
 
 **Lưu ý về `SHEET_ID`**: Đây là Sheet chủ (Database Master) dùng để lưu danh sách người dùng (Users).
 *   Hãy tạo một Google Sheet mới.
 *   Copy ID trên URL (đoạn giữa `/d/` và `/edit`).
 *   Điền vào thuộc tính `SHEET_ID`.
+
+**🏦 Lưu ý về VCB Integration** (Tùy chọn):
+*   Nếu bạn muốn sử dụng tính năng theo dõi biến động VCB, cần thêm 3 thuộc tính VCB ở trên.
+*   Cập nhật `browserId` trong file `VCB.gs` (hàm `getBrowserId()`).
+*   Lấy browserId từ: https://netrotion.github.io/VCB-BrowserID/ (mở trên trình duyệt đã đăng nhập VCB).
+*   Xem thêm: [VCB-API Repository](https://github.com/netrotion/VCB-API)
 
 ---
 

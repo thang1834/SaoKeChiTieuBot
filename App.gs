@@ -1,10 +1,26 @@
 // --- CẤU HÌNH & BẢO MẬT ---
+// Dán đoạn này vào đầu file hoặc một file Config.gs riêng
+const CONFIG = {
+  // Lấy từ Property Service để bảo mật, hoặc điền trực tiếp
+  USER: PropertiesService.getScriptProperties().getProperty('VCB_USER') || '09xxxxxxxxx',
+  PASS: PropertiesService.getScriptProperties().getProperty('VCB_PASS') || 'password',
+  STK: PropertiesService.getScriptProperties().getProperty('VCB_ACC') || '9999999999',
+  // HF Space của bạn (endpoint: /predict, format: JSON)
+  HF_API: 'https://thangnd163063-captcha.hf.space/predict',
+  BOT_TOKEN: PropertiesService.getScriptProperties().getProperty('BOT_TOKEN'),
+  CHAT_ID: PropertiesService.getScriptProperties().getProperty('MY_CHAT_ID') // Admin
+};
+
 function setupEnv() {
   var scriptProperties = PropertiesService.getScriptProperties();
   scriptProperties.setProperties({
     'BOT_TOKEN': 'YOUR_BOT_TOKEN',
     'SHEET_ID': 'YOUR_SHEET_ID', // USER DATABASE (MASTER SHEET)
-    'MY_CHAT_ID': 'YOUR_CHAT_ID' // Admin ID
+    'MY_CHAT_ID': 'YOUR_CHAT_ID', // Admin ID
+    // Thêm VCB info vào đây
+    'VCB_USER': 'YOUR_PHONE_NUMBER',
+    'VCB_PASS': 'YOUR_PASSWORD',
+    'VCB_ACC': 'YOUR_ACCOUNT_NO'
   });
   Logger.log("✅ Config saved!");
 }
@@ -20,7 +36,7 @@ var PROPS = PropertiesService.getScriptProperties().getProperties();
 var token = PROPS['BOT_TOKEN'];
 var masterSheetId = PROPS['SHEET_ID']; // Đổi tên biến để rõ ràng
 var myChatId = PROPS['MY_CHAT_ID'];
-var BOT_EMAIL = "ducthang01052002@gmail.com";
+var BOT_EMAIL = "your_email@gmail.com"; // Thay bằng email của bạn
 
 // --- DICTIONARY ---
 const TEXT = {
@@ -57,16 +73,32 @@ const TEXT = {
     choose_lang: "🌐 Chọn ngôn ngữ / Choose language:",
     lang_set: "🇻🇳 Đã chuyển sang Tiếng Việt.",
     donate_msg: "🙏 **Cảm ơn bạn đã ủng hộ!**\nQuét mã QR bên dưới để chuyển khoản:",
-    help: "🌟 **HƯỚNG DẪN / HELP** 🌟\n\n" +
-          "🔗 **Connect**: `/connect [SheetID]`\n" +
-          "💸 **Chi**: `50k cafe`, `2m nhà`\n" +
-          "💰 **Thu**: `/in 10m`\n" +
-          "📊 **Report**: `/report`\n" +
-          "📜 **List**: `/list`\n" +
-          "🎯 **Budget**: `/budget 10m`\n" +
-          "⏰ **Remind**: `/remind 21:00`\n" +
-          "📂 **Export**: `/export`\n" +
-          "💖 **Donate**: `/donate`"
+    help: "🌟 **HƯỚNG DẪN SỬ DỤNG** 🌟\n\n" +
+          "� **KẾT NỐI**\n" +
+          "`/connect [SheetID]` - Kết nối Sheet\n\n" +
+          "💸 **CHI TIÊU**\n" +
+          "`50k cafe` hoặc `2m nhà` - Nhập chi tiêu\n" +
+          "`/undo` - Xóa giao dịch cuối\n" +
+          "`/delete [ID]` - Xóa theo ID\n" +
+          "`/search [từ khóa]` - Tìm kiếm\n\n" +
+          "💰 **THU NHẬP**\n" +
+          "`/in 10m lương` - Nhập thu nhập\n\n" +
+          "📊 **BÁO CÁO**\n" +
+          "`/report` - Báo cáo tháng này\n" +
+          "`/report 12/2025` - Báo cáo tháng cụ thể\n" +
+          "`/list` - Danh sách giao dịch\n" +
+          "`/filter` - Lọc theo hạng mục\n" +
+          "`/export` - Xuất file CSV\n\n" +
+          "🎯 **NGÂN SÁCH**\n" +
+          "`/budget` - Xem ngân sách\n" +
+          "`/budget 5m` - Đặt tổng ngân sách\n" +
+          "`/budget 2m ăn uống` - Đặt theo hạng mục\n\n" +
+          "⏰ **NHẮC NHỞ**\n" +
+          "`/remind 21:00` - Đặt nhắc nhở\n" +
+          "`/stopremind` - Tắt nhắc nhở\n\n" +
+          "⚙️ **CÀI ĐẶT**\n" +
+          "`/lang` - Đổi ngôn ngữ\n" +
+          "`/donate` - Ủng hộ tác giả"
   },
   en: {
     unauth: "⛔ Sheet not connected!\nInstructions:\n1. Create a new Google Sheet.\n2. Share **Editor** access to: `" + BOT_EMAIL + "` (or 'Anyone with the link').\n3. Copy Sheet ID.\n4. Type: `/connect [Sheet_ID]`",
@@ -102,15 +134,31 @@ const TEXT = {
     lang_set: "🇬🇧 Language switched to English.",
     donate_msg: "🙏 **Thank you for your support!**\nScan the QR code below to donate:",
     help: "🌟 **USER GUIDE** 🌟\n\n" +
-          "🔗 **Connect**: `/connect [SheetID]`\n" +
-          "💸 **Exp**: `50k cafe`, `2m rent`\n" +
-          "💰 **Inc**: `/in 10m`\n" +
-          "📊 **Report**: `/report`\n" +
-          "📜 **List**: `/list`\n" +
-          "🎯 **Budget**: `/budget 10m`\n" +
-          "⏰ **Remind**: `/remind 21:00`\n" +
-          "📂 **Export**: `/export`\n" +
-          "💖 **Donate**: `/donate`"
+          "� **CONNECTION**\n" +
+          "`/connect [SheetID]` - Connect Sheet\n\n" +
+          "💸 **EXPENSES**\n" +
+          "`50k coffee` or `2m rent` - Log expense\n" +
+          "`/undo` - Delete last transaction\n" +
+          "`/delete [ID]` - Delete by ID\n" +
+          "`/search [keyword]` - Search\n\n" +
+          "💰 **INCOME**\n" +
+          "`/in 10m salary` - Log income\n\n" +
+          "📊 **REPORTS**\n" +
+          "`/report` - This month report\n" +
+          "`/report 12/2025` - Specific month\n" +
+          "`/list` - Transaction list\n" +
+          "`/filter` - Filter by category\n" +
+          "`/export` - Export CSV file\n\n" +
+          "🎯 **BUDGET**\n" +
+          "`/budget` - View budgets\n" +
+          "`/budget 5m` - Set total budget\n" +
+          "`/budget 2m food` - Set by category\n\n" +
+          "⏰ **REMINDERS**\n" +
+          "`/remind 21:00` - Set reminder\n" +
+          "`/stopremind` - Stop reminder\n\n" +
+          "⚙️ **SETTINGS**\n" +
+          "`/lang` - Change language\n" +
+          "`/donate` - Support the author"
   }
 };
 
@@ -379,6 +427,198 @@ function getBudgetMap(sheetId) {
     } catch(e) { return {}; }
 }
 
+// --- HELPER FUNCTIONS ---
+function parseDateArg(arg) {
+  var now = new Date();
+  var month = now.getMonth() + 1;
+  var year = now.getFullYear();
+  
+  if (arg) {
+    var parts = arg.split("/");
+    if (parts.length === 2) {
+      month = parseInt(parts[0]) || month;
+      year = parseInt(parts[1]) || year;
+    } else if (parts.length === 1) {
+      month = parseInt(parts[0]) || month;
+    }
+  }
+  return { month: month, year: year };
+}
+
+// --- REPORT FUNCTIONS ---
+function sendReport(cid, sheetId, arg) {
+  try {
+    var expSheet = getOrCreateSheetForUser(sheetId, 'Expense');
+    var incSheet = getOrCreateSheetForUser(sheetId, 'Income');
+    
+    var d = parseDateArg(arg);
+    var m = d.month, y = d.year;
+    
+    var expData = expSheet.getDataRange().getValues();
+    var incData = incSheet.getDataRange().getValues();
+    
+    var totalOut = 0, totalIn = 0;
+    var catTotals = {};
+    
+    // Sum Expenses
+    for (var i = 1; i < expData.length; i++) {
+      var date = new Date(expData[i][1]);
+      if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+        var amt = Number(expData[i][2]) || 0;
+        totalOut += amt;
+        var cat = expData[i][3] || "Khác";
+        catTotals[cat] = (catTotals[cat] || 0) + amt;
+      }
+    }
+    
+    // Sum Income
+    for (var i = 1; i < incData.length; i++) {
+      var date = new Date(incData[i][1]);
+      if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+        totalIn += Number(incData[i][2]) || 0;
+      }
+    }
+    
+    var balance = totalIn - totalOut;
+    
+    var msg = t('report_header') + " " + m + "/" + y + "\n\n";
+    msg += t('total_in') + " " + totalIn.toLocaleString() + "\n";
+    msg += t('total_out') + " " + totalOut.toLocaleString() + "\n";
+    msg += t('balance') + " " + balance.toLocaleString() + "\n\n";
+    msg += "📊 **Chi tiết chi tiêu:**\n";
+    
+    for (var cat in catTotals) {
+      msg += "• " + cat + ": " + catTotals[cat].toLocaleString() + "\n";
+    }
+    
+    if (Object.keys(catTotals).length === 0) {
+      msg += t('no_data');
+    }
+    
+    sendText(cid, msg);
+  } catch (e) {
+    Logger.log("Report Error: " + e);
+    sendText(cid, "❌ Lỗi tạo báo cáo: " + e.message);
+  }
+}
+
+function listExpenses(cid, sheetId, page, msgId, category, month, year) {
+  try {
+    var pageSize = 10;
+    var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
+    var data = sheet.getDataRange().getValues();
+    
+    var now = new Date();
+    var m = month ? parseInt(month) : now.getMonth() + 1;
+    var y = year ? parseInt(year) : now.getFullYear();
+    
+    // Filter data
+    var filtered = [];
+    for (var i = 1; i < data.length; i++) {
+      var date = new Date(data[i][1]);
+      if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+        if (!category || data[i][3] === category) {
+          filtered.push(data[i]);
+        }
+      }
+    }
+    
+    if (filtered.length === 0) {
+      sendText(cid, t('no_data'));
+      return;
+    }
+    
+    // Pagination
+    var totalPages = Math.ceil(filtered.length / pageSize);
+    page = Math.max(1, Math.min(page, totalPages));
+    var start = (page - 1) * pageSize;
+    var end = Math.min(start + pageSize, filtered.length);
+    
+    var msg = t('list_header') + " " + m + "/" + y;
+    if (category) msg += " (" + category + ")";
+    msg += "\n\n";
+    
+    for (var i = start; i < end; i++) {
+      var r = filtered[i];
+      var d = new Date(r[1]);
+      msg += "#" + r[0] + " | " + d.getDate() + "/" + (d.getMonth()+1) + " | " + Number(r[2]).toLocaleString() + " | " + r[3] + " | " + r[4] + "\n";
+    }
+    
+    msg += "\n📄 Trang " + page + "/" + totalPages;
+    
+    // Navigation buttons
+    var kb = [];
+    var navRow = [];
+    if (page > 1) navRow.push({text: "⬅️ Trước", callback_data: "page|" + (page-1) + "|" + (category||"") + "|" + m + "|" + y});
+    if (page < totalPages) navRow.push({text: "Sau ➡️", callback_data: "page|" + (page+1) + "|" + (category||"") + "|" + m + "|" + y});
+    if (navRow.length > 0) kb.push(navRow);
+    kb.push([{text: "🔙 Lọc theo hạng mục", callback_data: "back_to_filter"}]);
+    
+    if (msgId) {
+      editMessage(cid, msgId, msg);
+    } else {
+      sendMessageKb(cid, msg, {inline_keyboard: kb});
+    }
+  } catch (e) {
+    Logger.log("List Error: " + e);
+    sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+// --- EXPORT FUNCTIONS ---
+function sendExportOptions(cid) {
+  var kb = [
+    [{text: "📤 Chi tiêu (Expense)", callback_data: "export|expense"}],
+    [{text: "📥 Thu nhập (Income)", callback_data: "export|income"}],
+    [{text: "📊 Tất cả (All)", callback_data: "export|all"}]
+  ];
+  sendMessageKb(cid, t('export_msg') + "Chọn loại dữ liệu:", {inline_keyboard: kb});
+}
+
+function exportData(cid, sheetId, type) {
+  try {
+    var ss = SpreadsheetApp.openById(sheetId);
+    var folder = DriveApp.getRootFolder();
+    var fileName = "Export_" + type + "_" + new Date().toISOString().split('T')[0] + ".csv";
+    
+    var content = "";
+    
+    if (type === "expense" || type === "all") {
+      var expSheet = ss.getSheetByName('Expense');
+      if (expSheet) {
+        var expData = expSheet.getDataRange().getValues();
+        content += "=== CHI TIÊU ===\n";
+        for (var i = 0; i < expData.length; i++) {
+          content += expData[i].join(",") + "\n";
+        }
+        content += "\n";
+      }
+    }
+    
+    if (type === "income" || type === "all") {
+      var incSheet = ss.getSheetByName('Income');
+      if (incSheet) {
+        var incData = incSheet.getDataRange().getValues();
+        content += "=== THU NHẬP ===\n";
+        for (var i = 0; i < incData.length; i++) {
+          content += incData[i].join(",") + "\n";
+        }
+      }
+    }
+    
+    var file = folder.createFile(fileName, content, MimeType.PLAIN_TEXT);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    sendText(cid, "✅ Đã xuất file!\n📎 Link: " + file.getUrl());
+    
+    // Auto-delete after 24h (optional cleanup)
+    Utilities.sleep(100);
+  } catch (e) {
+    Logger.log("Export Error: " + e);
+    sendText(cid, "❌ Lỗi xuất file: " + e.message);
+  }
+}
+
 function handleExpenseMessage(cid, sheetId, text) {
   var p = text.split(" ");
   var raw = p[0].toLowerCase();
@@ -419,6 +659,48 @@ function searchExpenses(cid, sheetId, k) {
   var d = getOrCreateSheetForUser(sheetId, 'Expense').getDataRange().getValues(), msg="", total=0;
   for(var i=1;i<d.length;i++) { if(String(d[i]).toLowerCase().includes(k.toLowerCase())) { msg += "• " + d[i][3] + ": " + Number(d[i][2]).toLocaleString() + " (" + d[i][4] + ")\n"; total += Number(d[i][2]); } }
   sendText(cid, t('search_result') + "\n" + (msg||t('not_found')) + "\nTotal: " + total.toLocaleString());
+}
+
+// --- INCOME HANDLERS ---
+function handleIncomeCommand(cid, sheetId, text) {
+  // Parse: "200k" or "10m lương" or "5m test"
+  var p = text.split(" ");
+  var raw = p[0].toLowerCase();
+  var mul = raw.includes('k') ? 1000 : (raw.includes('m') ? 1000000 : 1);
+  var amt = parseFloat(raw.replace(/[km]/g, "").replace(/,/g, "")) * mul;
+  
+  if (isNaN(amt) || amt <= 0) { 
+    sendText(cid, t('invalid_num')); 
+    return; 
+  }
+  
+  var note = p.slice(1).join(" ") || "Income";
+  
+  // Show category buttons for income
+  var cats = ["Lương", "Thưởng", "Đầu tư", "Donate", "Khác"];
+  var kb = [];
+  for (var i = 0; i < cats.length; i += 2) {
+    var row = [{text: cats[i], callback_data: "in_save|" + cats[i] + "|" + amt + "|" + note}];
+    if (cats[i+1]) row.push({text: cats[i+1], callback_data: "in_save|" + cats[i+1] + "|" + amt + "|" + note});
+    kb.push(row);
+  }
+  sendMessageKb(cid, "💰 Lưu thu nhập " + amt.toLocaleString() + " vào hạng mục:", {inline_keyboard: kb});
+}
+
+function handleSaveIncome(cid, sheetId, cb) {
+  var d = cb.data.split("|"); // in_save|Category|Amount|Note
+  var cat = d[1], amt = Number(d[2]), note = d[3];
+  
+  var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+  sheet.appendRow([sheet.getLastRow(), new Date(), amt, cat, note]);
+  
+  editMessage(cid, cb.message.message_id, t('saved_in') + " " + amt.toLocaleString() + "\n📂 " + cat + " | 📝 " + note);
+}
+
+function handleDonateCommand(cid, text) {
+  // Show QR code and donation info
+  var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.STK + "-1SSGSl9.png";
+  sendPhoto(cid, qrUrl, t('donate_msg'));
 }
 
 // --- BASIC SENDER ---
@@ -511,4 +793,185 @@ function sendDailyReminder() {
     // Revert to sending to myChatId (Admin) only for specific request, or braodcast?
     // Let's just send to 'myChatId' (Admin) as original logic. 
     UrlFetchApp.fetch("https://api.telegram.org/bot" + token + "/sendMessage", { method: "post", payload: { chat_id: String(myChatId), text: "🔔 Reminder!" } }); 
+}
+
+// --- VCB AUTOMATION & DONATE TRACKING ---
+
+/**
+ * Hàm chính chạy định kỳ (Time-driven trigger)
+ * Cài đặt Trigger: Chạy mỗi 10 hoặc 30 phút.
+ */
+function runCheckBalance() {
+  var MAX_RETRIES = 3;
+  
+  for (var attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    Logger.log("🔄 Attempt " + attempt + "/" + MAX_RETRIES);
+    
+    try {
+      // 1. Get Captcha
+      var captchaObj = getVcbCaptcha();
+      if (!captchaObj.base64) {
+        Logger.log("❌ Failed to get Captcha");
+        continue;
+      }
+      
+      // 2. Solve Captcha (HuggingFace)
+      var captchaText = solveCaptchaOnHF(captchaObj.base64);
+      if (!captchaText) {
+        Logger.log("❌ Failed to solve Captcha");
+        continue;
+      }
+      Logger.log("✅ Captcha solved: " + captchaText);
+      
+      // 3. Login
+      var sessionId = loginVCB(captchaText, captchaObj);
+      
+      if (sessionId) {
+        Logger.log("✅ Login Success, SessionID: " + sessionId.substring(0, 10) + "...");
+        
+        // 4. Get History
+        var txns = getVcbHistory(sessionId);
+        
+        // 5. Process
+        if (txns && txns.length > 0) {
+          processDonations(txns);
+        } else {
+          Logger.log("📭 No recent transactions.");
+        }
+        
+        return; // Success, exit the loop
+        
+      } else {
+        Logger.log("❌ Login Failed (likely wrong captcha), retrying...");
+        Utilities.sleep(1000); // Wait 1 second before retry
+      }
+    } catch (e) {
+      Logger.log("🔥 System Error: " + e);
+    }
+  }
+  
+  Logger.log("❌ All " + MAX_RETRIES + " attempts failed.");
+}
+
+function solveCaptchaOnHF(base64Image) {
+  try {
+    // Format for repo's HF Space: {"data": "data:image/jpeg;base64,{b64encimg}"}
+    var payload = {
+      "data": "data:image/jpeg;base64," + base64Image
+    };
+    
+    var options = {
+      'method': 'post',
+      'contentType': 'application/json',
+      'payload': JSON.stringify(payload),
+      'muteHttpExceptions': true
+    };
+    
+    var res = UrlFetchApp.fetch(CONFIG.HF_API, options);
+    var txt = res.getContentText();
+    Logger.log("HF Response: " + txt);
+    
+    try {
+      var json = JSON.parse(txt);
+    } catch(e) {
+      Logger.log("HF Response is not JSON");
+      return null;
+    }
+    
+    // Repo's Space returns: {"result": "..."} 
+    if (json.result) return json.result;
+    if (json.captcha) return json.captcha;
+    if (json.data && json.data[0]) return json.data[0];
+    
+    Logger.log("⚠️ Unknown HF Response format");
+    return null; 
+  } catch (e) {
+    Logger.log("Captcha Solve Err: " + e);
+    return null;
+  }
+}
+
+function processDonations(txns) {
+  var props = PropertiesService.getScriptProperties();
+  var lastId = props.getProperty('LAST_VCB_TXN_ID') || "0";
+  
+  // Sort by time? Usually API returns newest first or unsorted.
+  // Best to process all, filter by ID > lastId.
+  // VCB txnId usually string/number valid for comparison?
+  // If txnId is string "239482...", string compare might be wrong if length differs ("10" < "9").
+  // Safe to use logic: New txns valid if we haven't seen them.
+  // Simple logic:
+  
+  var newLastId = lastId;
+  var count = 0;
+  
+  // Reverse to process Oldest -> Newest (if API returns Newest First)
+  // Repo: usually returns list.
+  
+  // Let's iterate.
+  for (var i = txns.length - 1; i >= 0; i--) {
+     var t = txns[i];
+     // Check ID. VCB ID example: "12345". 
+     // Comparison:
+     if (compareTxnId(t.reference, lastId) > 0) { // reference or transactionId
+        // New Transaction!
+        // Filter incoming only? (Credit) -> "CD" = "+", "D" = "-" usually.
+        // VCB: dorc = "C" (Credit) / "D" (Debit)
+        if (t.dorc === 'C' || t.amount > 0) {
+            var msg = (t.description || "").toLowerCase();
+            var amt = Number(t.amount.replace(/,/g, ''));
+            
+            // Save to Income sheet (Admin)
+            try {
+              var sheet = getOrCreateSheetForUser(masterSheetId, 'Income');
+              sheet.appendRow([sheet.getLastRow(), new Date(t.transactionDate), amt, "Donate", t.description || "Bank Transfer"]);
+            } catch(e) {
+              Logger.log("Save Donate Error: " + e);
+            }
+            
+            // Send Thank You
+            var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
+                        "💰 Số tiền: " + amt.toLocaleString() + " VNĐ\n" +
+                        "📝 Nội dung: " + t.description + "\n" +
+                        "⏰ Thời gian: " + t.transactionDate;
+            
+            sendTelegramNotice(reply);
+            count++;
+        }
+        
+        // Update Last ID
+        if (compareTxnId(t.reference, newLastId) > 0) newLastId = t.reference;
+     }
+  }
+  
+  if (count > 0) {
+    props.setProperty('LAST_VCB_TXN_ID', newLastId);
+    Logger.log("✅ Processed " + count + " new donations.");
+  }
+}
+
+function compareTxnId(a, b) {
+    // VCB References often numeric strings.
+    // If purely numeric, parse.
+    // If not, string compare.
+    // If 1 is empty, the other is larger.
+    if (!b) return 1;
+    if (!a) return -1;
+    // Compare logic
+    // Try number
+    try {
+        var na = parseFloat(a);
+        var nb = parseFloat(b);
+        if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    } catch(e){}
+    return a.localeCompare(b);
+}
+
+function sendTelegramNotice(text) {
+   // Send to Admin (MY_CHAT_ID)
+   if (!myChatId) return;
+   UrlFetchApp.fetch("https://api.telegram.org/bot" + token + "/sendMessage", { 
+       method: "post", 
+       payload: { chat_id: String(myChatId), text: text, parse_mode: "Markdown" } 
+   });
 }

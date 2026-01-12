@@ -25,12 +25,21 @@
 -   **📂 Xuất dữ liệu (Export)**: Tải file CSV chuẩn UTF-8 (dùng cho Excel) để lưu trữ offline.
 -   **🌍 Đa ngôn ngữ**: Hỗ trợ Tiếng Việt & English.
 
+### 🏦 VCB Bank Tracking (NEW!)
+-   **💳 Tự động theo dõi biến động số dư** từ Vietcombank.
+-   **🔔 Thông báo Donate**: Tự động gửi tin nhắn "Cảm ơn" khi có tiền vào tài khoản.
+-   **🔐 Bảo mật**: Sử dụng AES-256 + RSA encryption, FingerprintJS.
+-   **🤖 Captcha AI**: Tích hợp HuggingFace Space để giải captcha tự động.
+
 ---
 
 ## 🗺 Roadmap & To-Do List
 
 Dự án đang được phát triển tích cực. Dưới đây là các tính năng dự kiến trong tương lai:
 
+- [x] **🏦 VCB Integration**:
+    -   Tự động theo dõi giao dịch từ Vietcombank.
+    -   Thông báo donate qua Telegram.
 - [ ] **🤖 AI Integration (Gemini Flash)**:
     -   Tích hợp Google Gemini API để xử lý ngôn ngữ tự nhiên.
     -   *Ví dụ*: "Sáng nay đổ xăng 50k với ăn sáng 35k" -> Bot tự tách thành 2 giao dịch.

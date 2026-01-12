@@ -2,6 +2,11 @@
 .clasp.json
 creds.json
 
+# Environment files (SENSITIVE!)
+.env
+.env.local
+.env.production
+
 # OS generated files
 .DS_Store
 Thumbs.db
