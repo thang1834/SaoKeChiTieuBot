@@ -350,6 +350,7 @@ function generateGuid() {
 function getBrowserId() {
   // FingerprintJS visitorId từ trình duyệt đã xác thực VCB
   // Lấy từ: https://netrotion.github.io/VCB-BrowserID/
-  // Thay "YOUR_BROWSER_ID" bằng visitorId của bạn
-  return "YOUR_BROWSER_ID";
+  // Hoặc lưu trong Script Properties: VCB_BROWSER_ID
+  var browserId = PropertiesService.getScriptProperties().getProperty('VCB_BROWSER_ID');
+  return browserId || "YOUR_BROWSER_ID";
 }
