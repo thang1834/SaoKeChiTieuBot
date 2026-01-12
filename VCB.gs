@@ -142,11 +142,12 @@ function getListAccountViaCif(sessionId) {
          Logger.log("First Account: " + JSON.stringify(decrypted.accountList[0]));
          return decrypted.accountList;
       }
-      if (decrypted.ddAccount) {
-         Logger.log("Found " + decrypted.ddAccount.length + " accounts in ddAccount.");
-         return decrypted.ddAccount;
+      if (decrypted.DDAccounts) {
+         Logger.log("Found " + decrypted.DDAccounts.length + " DDAccounts.");
+         Logger.log("First DDAccount: " + JSON.stringify(decrypted.DDAccounts[0]));
+         return decrypted.DDAccounts;
       }
-      return decrypted; // Return whole object if no list found
+      return decrypted; 
     }
   } catch(e) {
     Logger.log("Get Account List Error: " + e);
@@ -154,11 +155,11 @@ function getListAccountViaCif(sessionId) {
   return null;
 }
 
-function getVcbHistory(sessionId) {
+function getVcbHistory(sessionId, accountNo) {
   loadLibraries();
   
   var user = CONFIG.VCB_USER;
-  var account = CONFIG.VCB_ACC;
+  var account = accountNo || CONFIG.VCB_ACC; // Use passed accountNo if available
   
   // Use date range like browser (7 days back to today)
   var today = new Date();

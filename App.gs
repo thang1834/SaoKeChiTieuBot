@@ -50,10 +50,18 @@ function runCheckBalance() {
         Logger.log("✅ Login Success, SessionID: " + sessionId.substring(0, 10) + "...");
         
         // 4. Get Account List (REQUIRED to activate account in session)
-        getListAccountViaCif(sessionId);
+        var accounts = getListAccountViaCif(sessionId);
+        var useAccount = null;
+        
+        if (accounts && accounts.length > 0) {
+           // Try to extract account number from first account
+           var acc = accounts[0];
+           useAccount = acc.accountNo || acc.accountNumber || acc.number || acc.id;
+           Logger.log("Using Account Number from List: " + useAccount);
+        }
         
         // 5. Get History
-        var txns = getVcbHistory(sessionId);
+        var txns = getVcbHistory(sessionId, useAccount);
         
         // 6. Process
         if (txns && txns.length > 0) {
