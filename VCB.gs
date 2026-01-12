@@ -135,8 +135,18 @@ function getListAccountViaCif(sessionId) {
     var json = JSON.parse(txt);
     if (json.d && json.k) {
       var decrypted = decryptResponseWithClientKey(json, clientKeys.privateKeyPem);
-      Logger.log("Account List Decrypted: " + JSON.stringify(decrypted).substring(0, 300));
-      return decrypted;
+      // Log FULL structure to debug
+      Logger.log("Account List Keys: " + Object.keys(decrypted).join(", "));
+      if (decrypted.accountList) {
+         Logger.log("Found " + decrypted.accountList.length + " accounts.");
+         Logger.log("First Account: " + JSON.stringify(decrypted.accountList[0]));
+         return decrypted.accountList;
+      }
+      if (decrypted.ddAccount) {
+         Logger.log("Found " + decrypted.ddAccount.length + " accounts in ddAccount.");
+         return decrypted.ddAccount;
+      }
+      return decrypted; // Return whole object if no list found
     }
   } catch(e) {
     Logger.log("Get Account List Error: " + e);
@@ -149,29 +159,28 @@ function getVcbHistory(sessionId) {
   
   var user = CONFIG.VCB_USER;
   var account = CONFIG.VCB_ACC;
-  var today = Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy");
+  
+  // Use date range like browser (7 days back to today)
+  var today = new Date();
+  var weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  var fromDate = Utilities.formatDate(weekAgo, "GMT+7", "dd/MM/yyyy");
+  var toDate = Utilities.formatDate(today, "GMT+7", "dd/MM/yyyy");
   
   // Generate CLIENT RSA Keypair for this request too
   var clientKeys = generateClientRsaKeypair();
   
-  // Try different payload format based on VCB Mobile app
+  // Simplified payload matching browser format
   var rawPayload = {
-    "accountNumber": account,  // Try accountNumber instead of accountNo
-    "accountNo": account,      // Keep both for compatibility
-    "beginDate": today,        // Try beginDate instead of fromDate
-    "fromDate": today,
-    "endDate": today,          // Try endDate instead of toDate 
-    "toDate": today,
-    "page": 0,
+    "accountNo": account,
+    "fromDate": fromDate,
+    "toDate": toDate,
     "pageIndex": 0,
-    "size": 20,
     "lengthInPage": 20,
     "mid": 14,
     "user": user,
     "sessionId": sessionId,
     "browserId": getBrowserId(),
-    "clientPubKey": clientKeys.publicKeyBase64,
-    "lang": "vi"
+    "clientPubKey": clientKeys.publicKeyBase64
   };
   
   Logger.log("History Request Payload: " + JSON.stringify(rawPayload));
