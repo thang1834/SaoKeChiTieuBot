@@ -83,7 +83,7 @@ function generateExpenseChart(catTotals, month, year) {
     for (var cat in catTotals) {
       var percent = Math.round(catTotals[cat] / total * 100);
       labels.push(cat + ' (' + percent + '%)');
-      data.push(catTotals[cat]);
+      data.push(percent);
     }
     
     var chartConfig = {
@@ -94,7 +94,17 @@ function generateExpenseChart(catTotals, month, year) {
           data: data,
           backgroundColor: CONFIG.CHART_COLORS.slice(0, labels.length),
           borderWidth: 2,
-          borderColor: '#fff'
+          borderColor: '#fff',
+          datalabels: {
+            labels: {
+              value: {
+                color: '#fff',
+                font: { weight: 'bold', size: 14 },
+                formatter: 'value',
+                display: 'auto'
+              }
+            }
+          }
         }]
       },
       options: {
@@ -102,29 +112,36 @@ function generateExpenseChart(catTotals, month, year) {
           title: {
             display: true,
             text: 'Chi tiêu tháng ' + month + '/' + year,
-            font: { size: 20, weight: 'bold' },
-            padding: 20
+            font: { size: 18, weight: 'bold' },
+            color: '#333',
+            padding: 15
           },
           legend: {
+            display: true,
             position: 'right',
+            align: 'center',
             labels: { 
-              font: { size: 13 },
-              padding: 15,
-              usePointStyle: true
+              font: { size: 12 },
+              padding: 10,
+              usePointStyle: true,
+              boxWidth: 12
             }
           },
           datalabels: {
-            display: true,
+            display: 'auto',
             color: '#fff',
-            font: { weight: 'bold', size: 12 },
-            formatter: 'percent'
+            font: { weight: 'bold', size: 13 },
+            anchor: 'center',
+            align: 'center'
           }
         },
-        layout: { padding: 20 }
+        layout: { 
+          padding: 10
+        }
       }
     };
     
-    return "https://quickchart.io/chart?c=" + encodeURIComponent(JSON.stringify(chartConfig)) + "&w=600&h=400&bkg=white";
+    return "https://quickchart.io/chart?c=" + encodeURIComponent(JSON.stringify(chartConfig)) + "&w=700&h=380&bkg=white";
   } catch (e) {
     Logger.log("Chart Error: " + e);
     return null;
