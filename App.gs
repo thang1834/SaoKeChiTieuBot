@@ -221,13 +221,28 @@ function processDonations(txns) {
                   sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú']);
                 }
                 
-                // Check if Donate contains UserID to resolve Name
-                var matchUser = (desc || "").match(/Donate\s*(\d+)/i);
+                // Check if Donate contains UserID (Handle both "Donate <ID>" and "<ID> Donate")
+                // Case 1: Donate <ID>
+                var match1 = (desc || "").match(/Donate\s*(\d+)/i);
+                // Case 2: <ID> Donate
+                var match2 = (desc || "").match(/(\d+)\s*Donate/i);
+                
+                var foundId = null;
+                if (match1) foundId = match1[1];
+                else if (match2) foundId = match2[1];
+
                 var saveNote = desc || "Bank Transfer";
-                if (matchUser) {
-                   var uName = getSenderName(matchUser[1]);
+                
+                if (foundId) {
+                   var uName = getSenderName(foundId);
                    if (uName && uName !== "Unknown") {
-                      saveNote = desc.replace(/Donate\s*\d+/i, uName);
+                      // Replace ONLY the ID + Keyword with Name
+                      // But the requirement is: "User A: <Note>"
+                      // Let's strip the ID and keyword out first.
+                      var msgOnly = desc.replace(/Donate\s*\d+/i, "").replace(/\d+\s*Donate/i, "").trim();
+                      if (!msgOnly) msgOnly = "Mời cafe";
+                      
+                      saveNote = uName + ": " + msgOnly;
                    }
                 }
                 
@@ -243,12 +258,33 @@ function processDonations(txns) {
                         "📝 Nội dung: " + desc + "\n" +
                         "⏰ Thời gian: " + dateStr;
             
-            // Check for UserID in Description (Format: "Donate <UserID>")
-            var match = (desc || "").match(/Donate\s*(\d+)/i);
-            var targetUserId = match ? match[1] : null;
+            // Check for UserID in Description
+            // Case 1: Donate <ID>
+            var m1 = (desc || "").match(/Donate\s*(\d+)/i);
+            // Case 2: <ID> Donate
+            var m2 = (desc || "").match(/(\d+)\s*Donate/i);
+            
+            var targetUserId = null;
+            if (m1) targetUserId = m1[1];
+            else if (m2) targetUserId = m2[1];
             
             // Resolve Display Name & Note
             var displayNote = desc;
+            var displayName = "Mạnh Thường Quân";
+            
+            if (targetUserId) {
+               // Try to get Name from System
+               var name = getSenderName(targetUserId); 
+               if (name && name !== "Unknown") {
+                  displayName = name;
+                  
+                  // Format: "User A: <Msg>"
+                  var msgBody = desc.replace(/Donate\s*\d+/i, "").replace(/\d+\s*Donate/i, "").trim();
+                  if (!msgBody) msgBody = "Đã nhận được tiền!";
+                  
+                  displayNote = msgBody;
+               }
+            }
             var displayName = "Mạnh Thường Quân";
             
             if (targetUserId) {
