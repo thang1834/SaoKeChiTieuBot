@@ -301,14 +301,10 @@ function processDonations(txns) {
             
             var userNotified = false;
             
-            // 1. Notify User (if ID found)
             if (targetUserId) {
-               try {
-                   sendTelegramNotice(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
-                   userNotified = true;
-               } catch(e) {
-                   Logger.log("Failed to notify user " + targetUserId + ": " + e);
-               }
+               // Send to the User who donated
+               sendText(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
+               userNotified = true;
             }
             
             // 2. Notify Admin (ALWAYS)
@@ -319,10 +315,10 @@ function processDonations(txns) {
                                "Note: " + msgContent + "\n" + 
                                "Status: " + (userNotified ? "✅ User Notified" : "⚠️ User NOT Notified");
                                
-                sendTelegramNotice(myChatId, adminMsg);
+                sendText(myChatId, adminMsg);
             } else {
                 // If Admin donated to themselves
-                 sendTelegramNotice(myChatId, reply);
+                 sendText(myChatId, reply);
             }
             
             count++;
@@ -345,14 +341,6 @@ function compareTxnId(a, b) {
         if (!isNaN(na) && !isNaN(nb)) return na - nb;
     } catch(e){}
     return String(a).localeCompare(String(b));
-}
-
-function sendTelegramNotice(text) {
-   if (!myChatId || !token) return;
-   UrlFetchApp.fetch("https://api.telegram.org/bot" + token + "/sendMessage", { 
-       method: "post", 
-       payload: { chat_id: String(myChatId), text: text, parse_mode: "Markdown" } 
-   });
 }
 
 // --- SETUP VCB TRIGGER ---
