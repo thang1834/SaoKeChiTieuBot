@@ -534,26 +534,18 @@ function setupWebhook() {
 function setupCommands() {
   var cmds = [
     {command: "connect", description: "🔗 Kết nối Sheet"},
-    {command: "in", description: "💰 Thu nhập"},
-    {command: "listin", description: "📋 DS thu nhập"},
-    {command: "report", description: "📊 Báo cáo"},
-    {command: "list", description: "📜 DS chi tiêu"},
+    {command: "start", description: "🚀 Bắt đầu"},
+    {command: "help", description: "💡 Hướng dẫn"},
+    {command: "report", description: "📊 Báo cáo tháng"},
+    {command: "list", description: "📜 Xem chi tiêu"},
+    {command: "listin", description: "💰 Xem thu nhập"},
     {command: "budget", description: "🎯 Ngân sách"},
-    {command: "category", description: "📂 Hạng mục"},
-    {command: "recurring", description: "🔄 Chi định kỳ"},
-    {command: "split", description: "🍰 Chia tiền"},
-    {command: "goal", description: "🏆 Mục tiêu"},
     {command: "debt", description: "📒 Sổ nợ"},
-    {command: "backup", description: "🛡 Sao lưu data"},
-    {command: "filter", description: "🔍 Lọc"},
-    {command: "export", description: "📤 Xuất file"},
+    {command: "goal", description: "🏆 Mục tiêu"},
+    {command: "recurring", description: "🔄 Chi định kỳ"},
+    {command: "export", description: "📤 Xuất dữ liệu"},
     {command: "remind", description: "⏰ Nhắc nhở"},
-    {command: "stopremind", description: "🔕 Tắt nhắc"},
-    {command: "undo", description: "↩️ Xóa mục cuối"},
-    {command: "search", description: "🔎 Tìm"},
-    {command: "lang", description: "🌐 Ngôn ngữ"},
-    {command: "donate", description: "💖 Ủng hộ"},
-    {command: "help", description: "💡 Hướng dẫn"}
+    {command: "lang", description: "🌐 Ngôn ngữ"}
   ];
   UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/setMyCommands", { 
     method: "post", 

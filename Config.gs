@@ -149,7 +149,7 @@ var TEXT = {
           "- Đặt riêng hạng mục: `/budget 2m Ăn uống`\n" +
           "⚠️ Bot sẽ cảnh báo khi bạn chi tiêu vượt mức!\n\n" +
           
-          "**6️⃣ TÍNH NĂNG KHÁC**\n" +
+          "**7️⃣ TÍNH NĂNG KHÁC**\n" +
           "- 🍰 **Chia tiền**: `/split 500k 4 ăn tối` (chia 500k cho 4 người)\n" +
           "- 🏆 **Mục tiêu**: `/goal add 50m Mua xe 12/2025`\n" +
           "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
@@ -157,6 +157,7 @@ var TEXT = {
           "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
           "- 📊 **Báo cáo**: `/report` (Auto)\n" +
           "- 📤 **Backup/Export**: `/backup` | `/export pdf` | `/export csv`\n\n" +
+          "🎙 **Voice Input**: Gửi Voice Note để nhập chi tiêu!\n" +
           "🌐 `/lang` (Đổi ngôn ngữ) | ❤️ `/donate`"
   },
   

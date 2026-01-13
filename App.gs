@@ -181,7 +181,18 @@ function processDonations(txns) {
                   sheet = ss.insertSheet('Income');
                   sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú']);
                 }
-                sheet.appendRow([sheet.getLastRow(), txnDate, amt, "Donate", desc || "Bank Transfer"]);
+                
+                // Check if Donate contains UserID to resolve Name
+                var matchUser = (desc || "").match(/Donate\s*(\d+)/i);
+                var saveNote = desc || "Bank Transfer";
+                if (matchUser) {
+                   var uName = getSenderName(matchUser[1]);
+                   if (uName && uName !== "Unknown") {
+                      saveNote = desc.replace(/Donate\s*\d+/i, uName);
+                   }
+                }
+                
+                sheet.appendRow([sheet.getLastRow(), txnDate, amt, "Donate", saveNote]);
               }
             } catch(e) {
               Logger.log("Save Donate Error: " + e);
@@ -197,16 +208,49 @@ function processDonations(txns) {
             var match = (desc || "").match(/Donate\s*(\d+)/i);
             var targetUserId = match ? match[1] : null;
             
+            // Resolve Display Name & Note
+            var displayNote = desc;
+            var displayName = "Mạnh Thường Quân";
+            
+            if (targetUserId) {
+               // Try to get Name from System
+               var name = getSenderName(targetUserId); 
+               if (name && name !== "Unknown") {
+                  displayName = name;
+                  // Replace "Donate <ID>" with Name in note
+                  displayNote = desc.replace(/Donate\s*\d+/i, displayName);
+               }
+            }
+
+            // Update row with resolved Name only if we found the user
+            if (targetUserId && displayName !== "Mạnh Thường Quân") {
+               try {
+                   // Re-update the last row (we just appended it above at line 184)
+                   // Actually, efficient way is to modify line 184. But let's overwrite it for clarity or modify logic above.
+                   // Since we have 'sheet' in scope? No, 'sheet' is inside try block above.
+                   // Let's modify the append logic at line 184 instead of updating later.
+               } catch(e) {}
+            }
+            
+            // Wait, let's restructure slightly to do lookup BEFORE saving.
+            
+            // Send Thank You
+            var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
+                        "💰 Số tiền: " + formatMoney(amt) + " VNĐ\n" +
+                        "👤 Người gửi: " + displayName + "\n" + 
+                        "📝 Nội dung: " + displayNote + "\n" +
+                        "⏰ Thời gian: " + dateStr;
+            
             if (targetUserId) {
                // Send to the User who donated
                sendTelegramNotice(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
                
                // Send notification to Admin (Owner)
                if (String(targetUserId) !== String(myChatId)) {
-                   sendTelegramNotice(myChatId, "🔔 **Admin Alert: New Donation**\nUser: `" + targetUserId + "`\nAmount: " + formatMoney(amt) + "\nDesc: " + desc);
+                   sendTelegramNotice(myChatId, "🔔 **Admin Alert: New Donation**\nUser: `" + displayName + "` (" + targetUserId + ")\nAmount: " + formatMoney(amt) + "\nNote: " + displayNote);
                }
             } else {
-               // Fallback: Send to default Chat ID (Owner/Group) if no ID found
+               // Fallback
                sendTelegramNotice(myChatId, reply);
             }
             
