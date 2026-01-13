@@ -96,9 +96,13 @@ function sendReport(cid, sheetId, arg, telegramId) {
     var balance = totalIn - totalOut;
     
     var msg = t('report_header', telegramId) + " " + m + "/" + y + "\n\n";
-    msg += t('total_in', telegramId) + " " + formatMoney(totalIn) + "\n";
-    msg += t('total_out', telegramId) + " " + formatMoney(totalOut) + "\n";
-    msg += t('balance', telegramId) + " " + formatMoney(balance) + "\n\n";
+    // Summary Block
+    msg += "```\n";
+    msg += "💰 THU   : " + formatMoney(totalIn).padStart(12) + "\n";
+    msg += "💸 CHI   : " + formatMoney(totalOut).padStart(12) + "\n";
+    msg += "💎 DƯ    : " + formatMoney(balance).padStart(12) + "\n";
+    msg += "```\n";
+    
     msg += "📊 **Chi tiết chi tiêu:**\n";
     
     for (var cat in catTotals) {
@@ -293,12 +297,18 @@ function listExpenses(cid, sheetId, page, msgId, category, month, year, telegram
     
     var msg = t('list_header', telegramId) + " " + m + "/" + y;
     if (category) msg += " (" + category + ")";
-    msg += "\n\n";
+    msg += "\n";
+    msg += "`" + "Ngày".padEnd(6) + " | " + "Số tiền".padEnd(10) + " | " + "Hạng mục" + "`\n";
     
     for (var i = start; i < end; i++) {
       var r = filtered[i];
       var d = new Date(r[1]);
-      msg += "#" + r[0] + " | " + d.getDate() + "/" + (d.getMonth()+1) + " | " + formatMoney(r[2]) + " | " + r[3] + " | " + r[4] + "\n";
+      var dateStr = (d.getDate() + "/" + (d.getMonth()+1)).padEnd(6);
+      var amtStr = formatMoney(r[2]).padEnd(10);
+      var catStr = r[3];
+      
+      msg += "`" + dateStr + " | " + amtStr + " | " + catStr + "`\n";
+      // msg += "_" + r[4] + "_\n"; 
     }
     
     msg += "\n📄 Trang " + page + "/" + totalPages;
@@ -360,22 +370,67 @@ function checkBudgetAlert(cid, sheetId, category, addAmt, telegramId) {
 }
 
 function setBudget(cid, sheetId, txt, telegramId) {
+  // Mode 1: View Budget (if no arguments)
   if (!txt) {
     var budgets = getBudgetMap(sheetId);
     if (Object.keys(budgets).length === 0) { 
       sendText(cid, "📭 Chưa có ngân sách nào. Gõ `/budget 5m [hạng mục]` để đặt."); 
       return; 
     }
-    var msg = "🎯 **Ngân sách tháng này:**\n";
-    for (var k in budgets) { 
-      msg += "- " + (k==='Total'?'**Tổng**':k) + ": " + formatMoney(budgets[k]) + "\n"; 
+    
+    var spending = calculateMonthlySpending(sheetId);
+    var now = new Date();
+    var msg = "🎯 **NGÂN SÁCH THÁNG " + (now.getMonth() + 1) + "/" + now.getFullYear() + "**\n\n";
+    
+    // 1. Total Budget
+    if (budgets['Total']) {
+       var limit = budgets['Total'];
+       var used = spending.total;
+       var pct = Math.round(used / limit * 100);
+       var remain = limit - used;
+       
+       msg += "🏦 **TỔNG NGÂN SÁCH**\n";
+       msg += drawProgressBar(pct) + " " + pct + "%\n";
+       msg += "💸 Dùng: " + formatMoney(used) + " / " + formatMoney(limit) + "\n";
+       msg += (remain >= 0 ? "📉 Còn: " : "⚠️ Lố: ") + formatMoney(Math.abs(remain)) + "\n\n";
     }
+    
+    // 2. Category Budgets
+    var hasCatBudget = false;
+    for (var k in budgets) { if (k !== 'Total') { hasCatBudget = true; break; } }
+    
+    if (hasCatBudget) {
+       msg += "📂 **CHI TIẾT HẠNG MỤC**\n";
+       for (var catName in budgets) {
+          if (catName === 'Total') continue;
+          
+          var limit = budgets[catName];
+          // Sum spending for this category (case-insensitive match)
+          var used = 0;
+          for (var c in spending.categories) {
+             if (c.toLowerCase() === catName.toLowerCase()) used += spending.categories[c];
+          }
+          
+          var pct = Math.round(used / limit * 100);
+          var remain = limit - used;
+          var statusIcon = (pct >= 100) ? "🔴" : (pct >= 80 ? "🟡" : "🟢");
+          
+          msg += statusIcon + " **" + catName + "**\n";
+          msg += drawProgressBar(pct) + " " + pct + "%\n";
+          msg += "💵 " + formatMoney(used) + " / " + formatMoney(limit) + "\n";
+       }
+    }
+    
     sendText(cid, msg);
     return;
   }
 
+  // Mode 2: Set Budget (args: amount [category])
   var amt = parseAmount(txt.split(" ")[0]);
-  if (!amt) { sendText(cid, t('invalid_num', telegramId)); return; }
+  if (!amt) { 
+      sendText(cid, t('invalid_num', telegramId)); 
+      return; 
+  }
   
   var cat = txt.split(" ").slice(1).join(" ") || "Total";
   // Validate category if not 'Total'
@@ -399,6 +454,27 @@ function setBudget(cid, sheetId, txt, telegramId) {
   if (!found) sheet.appendRow([cat, amt]);
   
   sendText(cid, "✅ Đã đặt ngân sách **" + cat + "**: " + formatMoney(amt));
+}
+
+function calculateMonthlySpending(sheetId) {
+  var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
+  var data = sheet.getDataRange().getValues();
+  var total = 0;
+  var catTotals = {};
+  var now = new Date();
+  var m = now.getMonth() + 1;
+  var y = now.getFullYear();
+
+  for (var i = 1; i < data.length; i++) {
+    var d = new Date(data[i][1]);
+    if (d.getMonth() + 1 === m && d.getFullYear() === y) {
+      var val = Number(data[i][2]);
+      total += val;
+      var c = data[i][3] || "Uncategorized";
+      catTotals[c] = (catTotals[c] || 0) + val;
+    }
+  }
+  return { total: total, categories: catTotals };
 }
 
 function getBudgetMap(sheetId) {
@@ -699,13 +775,21 @@ function listIncome(cid, sheetId, page, msgId, month, year, telegramId) {
     var start = (page - 1) * pageSize;
     var end = Math.min(start + pageSize, filtered.length);
     
-    var msg = "💰 **THU NHẬP THÁNG " + m + "/" + y + "**\n\n";
+    // Table Header
+    var msg = "💰 **THU NHẬP THÁNG " + m + "/" + y + "**\n";
+    msg += "`" + "Ngày".padEnd(6) + " | " + "Số tiền".padEnd(10) + " | " + "Hạng mục" + "`\n";
     
     for (var i = start; i < end; i++) {
       var r = filtered[i];
       var d = new Date(r[1]);
+      var dateStr = (d.getDate() + "/" + (d.getMonth()+1)).padEnd(6);
+      var amtStr = formatMoney(r[2]).padEnd(10);
+      var catStr = r[3];
       var isDonate = (r[3] || "").toLowerCase() === "donate";
-      msg += (isDonate ? "🔒" : "#" + r[0]) + " | " + d.getDate() + "/" + (d.getMonth()+1) + " | " + formatMoney(r[2]) + " | " + r[3] + " | " + r[4] + "\n";
+      var icon = isDonate ? "🔒" : "";
+      
+      msg += "`" + dateStr + " | " + amtStr + " | " + catStr + "` " + icon + "\n";
+      // msg += "_" + r[4] + "_\n"; // Note below
     }
     
     msg += "\n📄 Trang " + page + "/" + totalPages;
@@ -756,7 +840,7 @@ function getCategories(sheetId, type) {
 
 function addCategory(cid, sheetId, name, type, telegramId) {
   if (!name) {
-    sendText(cid, "❌ Cú pháp: `/category add [tên]`\nVD: `/category add Cà phê`");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/category add [tên]`\nVD: `/category add Cà phê`");
     return;
   }
   
@@ -803,7 +887,7 @@ function addCategory(cid, sheetId, name, type, telegramId) {
 
 function removeCategory(cid, sheetId, name, type, telegramId) {
   if (!name) {
-    sendText(cid, "❌ Cú pháp: `/category del [tên]`\nVD: `/category del Cà phê`");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/category del [tên]`\nVD: `/category del Cà phê`");
     return;
   }
   
@@ -931,7 +1015,7 @@ function sendCategoryButtonsCustom(cid, sheetId, amount, note, telegramId) {
   sendMessageKb(cid, t('choose_cat', telegramId) + " " + formatMoney(amount) + " (" + note + ")", {inline_keyboard: kb});
 }
 
-function sendFilterButtonsCustom(cid, sheetId, telegramId) { 
+function sendFilterButtonsCustom(cid, sheetId, telegramId, msgId) { 
   var cats = getCategories(sheetId, 'expense');
   var kb = [];
   for (var i = 0; i < cats.length; i += 2) {
@@ -941,7 +1025,13 @@ function sendFilterButtonsCustom(cid, sheetId, telegramId) {
     }
     kb.push(row);
   }
-  sendMessageKb(cid, "📂 Chọn hạng mục:", {inline_keyboard: kb});
+  
+  var title = "📂 **Chọn hạng mục để lọc:**";
+  if (msgId) {
+     editMessageKb(cid, msgId, title, {inline_keyboard: kb});
+  } else {
+     sendMessageKb(cid, title, {inline_keyboard: kb});
+  }
 }
 
 function sendIncomeButtonsCustom(cid, sheetId, amount, note, telegramId) {
@@ -963,7 +1053,7 @@ function addRecurring(cid, sheetId, args, telegramId) {
   // args: "2m nhà cửa monthly 1" or "2m nhà cửa" (default: monthly, day 1)
   var parts = args.split(" ");
   if (parts.length < 2) {
-    sendText(cid, "❌ Cú pháp: `/recurring add [số tiền] [ghi chú] [monthly/weekly] [ngày]`\nVD: `/recurring add 2m tiền nhà monthly 1`");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/recurring add [số tiền] [ghi chú] [monthly/weekly] [ngày]`\nVD: `/recurring add 2m tiền nhà monthly 1`");
     return;
   }
   
@@ -1011,7 +1101,7 @@ function addRecurring(cid, sheetId, args, telegramId) {
 
 function removeRecurring(cid, sheetId, id, telegramId) {
   if (!id) {
-    sendText(cid, "❌ Cú pháp: `/recurring del [ID]`");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/recurring del [ID]`");
     return;
   }
   
@@ -1079,13 +1169,14 @@ function listRecurring(cid, sheetId, telegramId) {
   }
 }
 
-function handleRecurringCallback(cid, data, sheetId, telegramId) {
+function handleRecurringCallback(cid, data, sheetId, telegramId, msgId) {
     // data format: rec_del|ID
     var parts = data.split("|");
     var action = parts[0];
     var id = parts[1];
     
     if (action === "rec_del") {
+       deleteMessage(cid, msgId); // Hide list
        removeRecurring(cid, sheetId, id, telegramId);
     }
 }
@@ -1155,20 +1246,15 @@ function processRecurringTransactions() {
           }
           
           if (shouldRun) {
-            // Add expense
-            expenseSheet.appendRow([
-              expenseSheet.getLastRow(),
-              new Date(),
-              recData[r][1], // Amount
-              recData[r][2], // Category
-              recData[r][3] + " (Định kỳ)" // Note
-            ]);
+            // Add expense directly (Use addExpenseDirect for Budget Check & Smart Alert)
+            var note = recData[r][3] + " (Định kỳ)";
+            addExpenseDirect(telegramId, userSheetId, recData[r][1], recData[r][2], note, telegramId);
             
             // Update last run
             recurring.getRange(r + 1, 8).setValue(new Date());
             
             // Notify user
-            sendText(telegramId, "🔄 **Chi tiêu định kỳ**\n💰 " + formatMoney(recData[r][1]) + "\n📝 " + recData[r][3]);
+            sendText(telegramId, "🔄 **Chi tiêu định kỳ đã chạy**\n💰 " + formatMoney(recData[r][1]) + "\n📝 " + note);
           }
         }
       } catch (e) {
@@ -1209,7 +1295,7 @@ function splitBill(cid, args, telegramId) {
   var amount = parseAmount(parts[0]);
   
   if (!amount) {
-    sendText(cid, "❌ Cú pháp: `/split [tổng] [số người] [nội dung]`\nVD: `/split 500k 4 Ăn lẩu`");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/split [tổng] [số người] [nội dung]`\nVD: `/split 500k 4 Ăn lẩu`");
     return;
   }
   
@@ -1219,17 +1305,15 @@ function splitBill(cid, args, telegramId) {
     return;
   }
   
-  var note = parts.slice(2).join(" ") || "Chia tiền";
-  var perPerson = Math.ceil(amount / count);
-  
-  var msg = "🍰 **CHIA TIỀN: " + note + "**\n";
-  msg += "💰 Tổng cộng: " + formatMoney(amount) + "\n";
-  msg += "👥 Số người: " + count + "\n";
-  msg += "💵 Mỗi người: **" + formatMoney(perPerson) + "**\n\n";
+  var msg = "🧾 **HÓA ĐƠN CHIA TIỀN**\n";
+  msg += "`" + "Nội dung".padEnd(12) + ": " + note + "`\n";
+  msg += "`" + "Tổng cộng".padEnd(12) + ": " + formatMoney(amount) + "`\n";
+  msg += "`" + "Số người".padEnd(12) + ": " + count + "`\n";
+  msg += "`" + "Mỗi người".padEnd(12) + ": " + formatMoney(perPerson) + "`\n\n";
   msg += "👇 *Copy tin nhắn dưới đây để gửi vào nhóm:*";
   
   sendText(cid, msg);
-  sendText(cid, "```\n" + note + "\nMỗi người: " + formatMoney(perPerson) + "\nGlobal Bank\n```");
+  sendText(cid, "```\n" + "🍰 " + note + "\n💸 Mỗi người: " + formatMoney(perPerson) + "\n💳 Global Bank (VCB)\n```");
 }
 
 // =============================================================================
@@ -1250,7 +1334,7 @@ function handleGoalCommand(cid, sheetId, args, telegramId) {
   if (action === 'add') {
     var target = parseAmount(parts[1]);
     if (!target) {
-      sendText(cid, "❌ Cú pháp: `/goal add [số tiền] [tên] [ngày]`\nVD: `/goal add 50m Mua xe 12/2025`");
+      sendText(cid, "❌ **Sai cú pháp!**\n👉 `/goal add [số tiền] [tên] [ngày]`\nVD: `/goal add 50m Mua xe 12/2025`");
       return;
     }
     
@@ -1276,7 +1360,7 @@ function handleGoalCommand(cid, sheetId, args, telegramId) {
     var amount = parseAmount(parts[2]);
     
     if (!id || !amount) {
-      sendText(cid, "❌ Cú pháp: `/goal deposit [ID] [số tiền]`");
+      sendText(cid, "❌ **Sai cú pháp!**\n👉 `/goal deposit [ID] [số tiền]`");
       return;
     }
     
@@ -1284,7 +1368,7 @@ function handleGoalCommand(cid, sheetId, args, telegramId) {
     return;
   }
   
-  sendText(cid, "❌ Lệnh không hợp lệ.\nDùng `/goal list`, `/goal add`, hoặc `/goal deposit`.");
+    sendText(cid, "❌ **Sai cú pháp!**\n👉 `/goal add`, `/goal deposit` hoặc `/goal list`.");
 }
 
 function getOrCreateGoalSheet(sheetId) {
@@ -1354,13 +1438,14 @@ function listGoals(cid, sheetId, telegramId) {
 }
 
 // HANDLE GOAL CALLBACK
-function handleGoalCallback(cid, data, sheetId, telegramId) {
+function handleGoalCallback(cid, data, sheetId, telegramId, msgId) {
     // data: goal_dep|ID
     var parts = data.split("|");
     var action = parts[0];
     var id = parts[1];
     
     if (action === "goal_dep") {
+       deleteMessage(cid, msgId); // Hide list
        // Ask for amount
        sendText(cid, "💰 Xin hãy nhập số tiền bạn muốn nạp (VD: `500k`):");
        
@@ -1392,6 +1477,10 @@ function depositGoal(cid, sheetId, id, amount, telegramId) {
         if (newCurrent >= target && current < target) {
             sendText(cid, "🏆 **CHÚC MỪNG! BẠN ĐÃ ĐẠT MỤC TIÊU " + data[i][1].toUpperCase() + "!** 🎆");
         }
+        
+        // Log to Expense
+        var note = "Nạp goal: " + data[i][1];
+        addExpenseDirect(cid, sheetId, amount, "Tiết kiệm", note, telegramId);
         
         found = true;
         break;
@@ -1446,7 +1535,7 @@ function handleDebtCommand(cid, sheetId, text, telegramId) {
      var note = args.slice(3).join(" ");
      
      if (!amountStr || !person) {
-        sendText(cid, "❌ Thiếu thông tin!\nCú pháp: `/debt " + type + " [số tiền] [người] [ghi chú]`");
+        sendText(cid, "❌ **Sai cú pháp!**\n👉 `/debt " + type + " [số tiền] [người] [ghi chú]`");
         return;
      }
      
@@ -1460,7 +1549,7 @@ function handleDebtCommand(cid, sheetId, text, telegramId) {
      return;
   }
   
-  sendText(cid, "❌ Lệnh không hợp lệ.\nSử dụng: `/debt [borrow|lend|list|repay]`");
+  sendText(cid, "❌ **Sai cú pháp!**\n👉 `/debt [borrow/lend/list/repay]`");
 }
 
 function addDebt(cid, sheetId, type, amount, person, note, telegramId) {
@@ -1510,10 +1599,11 @@ function listDebt(cid, sheetId, telegramId) {
            var typeIcon = (r[2] === 'BORROW') ? '🔴 vay' : '🔵 cho vay'; // Corrected type check
            var remain = Number(r[4]) - Number(r[5]); // Amount - Paid
            
-           msg += "#" + r[0] + " " + typeIcon + " **" + r[3] + "**\n";
-           msg += "💰 Còn: " + formatMoney(remain) + " (Tổng: " + formatMoney(r[4]) + ")\n";
+           msg += typeIcon + " **" + r[3] + "**\n";
+           msg += "💰 " + formatMoney(remain) + " (Tổng: " + formatMoney(r[4]) + ")\n";
            if(r[7]) msg += "📝 " + r[7] + "\n";
-           msg += "\n";
+           msg += "📅 " + new Date(r[1]).toLocaleDateString('vi-VN') + "\n";
+           msg += "──────────────\n";
            
            // Add Repay Button
            // Callback: debt_repay|ID
@@ -1531,6 +1621,18 @@ function listDebt(cid, sheetId, telegramId) {
    } catch(e) {
      sendText(cid, "❌ Lỗi: " + e.message);
    }
+}
+
+function handleDebtCallback(cid, data, sheetId, telegramId, msgId) {
+    // data: debt_repay|ID
+    var parts = data.split("|");
+    var action = parts[0];
+    var id = parts[1];
+    
+    if (action === "debt_repay") {
+       deleteMessage(cid, msgId); // Hide list
+       repayDebt(cid, sheetId, id, null, telegramId); // null amount = full
+    }
 }
 
 function repayDebt(cid, sheetId, id, amount, telegramId) {

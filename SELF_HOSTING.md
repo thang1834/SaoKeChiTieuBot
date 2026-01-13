@@ -59,6 +59,13 @@ Bạn muốn tự chạy bot trên tài khoản Google của mình? Miễn phí 
 
 > Cần lấy `browserId` từ: https://netrotion.github.io/VCB-BrowserID/
 
+### ⚡ Cách cấu hình nhanh (Khuyên dùng)
+Thay vì nhập thủ công từng dòng, bạn có thể dùng file `Setup.gs`:
+1. Mở file **`Setup.gs`**.
+2. Điền thông tin vào các biến trong hàm `setupEnvironment()`.
+3. Chọn hàm `setupEnvironment` trên thanh công cụ và bấm **Run**.
+4. Xong! Toàn bộ Script Properties đã được lưu.
+
 ---
 
 ## 🌐 Bước 4: Deploy Web App
@@ -92,6 +99,7 @@ setupWebhook()              // Kết nối webhook
 setupCommands()             // Tạo menu lệnh Telegram
 setupHourlyReminderTrigger() // Trigger nhắc nhở
 setupDailyRecurringTrigger() // Trigger chi tiêu định kỳ
+setupMonthlyReportTrigger()  // Trigger báo cáo tháng (ngày 1)
 setupVCBTrigger()           // (VCB) Check balance mỗi 10 phút
 ```
 
@@ -138,6 +146,21 @@ Tạo Google Sheet mới làm Master DB với các sheet:
 - Đã cập nhật `browserId` chưa?
 - Captcha API còn hoạt động không?
 - Xem Log: **View** → **Logs**
+
+---
+
+## 🔄 Cập Nhật (Update)
+Khi bạn cập nhật code mới (Copy paste code mới vào):
+
+1. **Deploy New Version**:
+   - Web App cần được deploy lại mới nhận code mới.
+   - Bấm **Deploy** -> **Manage deployments** -> **Edit** (cây bút) -> **Version**: *New version* -> **Deploy**.
+   - URL sẽ **không đổi**, nên **KHÔNG** cần chạy lại `setupWebhook()`.
+
+2. **Chạy lại Setup Functions**:
+   - Nếu có lệnh mới (VD: `/settings`): Chạy **`setupCommands()`**.
+   - Nếu có trigger mới: Chạy hàm setup trigger tương ứng (VD: `setupMonthlyReportTrigger()`).
+   - Các trigger cũ (Hourly Reminder, Daily Recurring, VCB) **KHÔNG** cần chạy lại (trừ khi bạn muốn reset).
 
 ---
 

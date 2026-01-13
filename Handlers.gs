@@ -163,10 +163,32 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
-  // /list [MM/YYYY] - Danh sách chi tiêu
+  // /list [type] [date] - Xem danh sách
+  // Hỗ trợ: /list, /list in, /listin, /list 12/2025
   if (text.startsWith("/list")) { 
-    var d = parseDateArg(text.replace("/list", "").trim());
-    listExpenses(senderId, userSheetId, 1, null, null, d.month, d.year, senderId);
+    var raw = text;
+    // Normalize /listin -> /list in
+    if (text.startsWith("/listin")) raw = text.replace("/listin", "/list in");
+    
+    var args = raw.replace("/list", "").trim();
+    var isIncome = false;
+    var dateStr = args;
+    
+    // Detect keywords: in, income, thu | out, chi, expense
+    var match = args.match(/^(in|income|thu|out|chi|expense)(\s+|$)/i);
+    if (match) {
+       var type = match[1].toLowerCase();
+       if (type === 'in' || type === 'income' || type === 'thu') isIncome = true;
+       dateStr = args.substring(match[0].length).trim();
+    }
+    
+    var d = parseDateArg(dateStr);
+    
+    if (isIncome) {
+       listIncome(senderId, userSheetId, 1, null, d.month, d.year, senderId);
+    } else {
+       listExpenses(senderId, userSheetId, 1, null, null, d.month, d.year, senderId);
+    }
     return; 
   }
   
@@ -216,12 +238,7 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
-  // /listin [MM/YYYY] - Danh sách thu nhập
-  if (text.startsWith("/listin")) { 
-    var d = parseDateArg(text.replace("/listin", "").trim());
-    listIncome(senderId, userSheetId, 1, null, d.month, d.year, senderId);
-    return; 
-  }
+
   
   // /undoin - Xóa thu nhập cuối (không áp dụng cho Donate)
   if (text === "/undoin") { 
@@ -254,6 +271,16 @@ function handleMessage(text, senderId, senderName) {
   // /stopremind - Tắt nhắc nhở
   if (text === "/stopremind") { 
     stopReminder(senderId, senderId); 
+    return; 
+  }
+  
+  // /start - Bắt đầu (Welcome)
+  if (text === "/start") { 
+    sendText(senderId, "👋 **Xin chào " + senderName + "!**\n\n" +
+      "Chào mừng bạn đến với **Sao Kê Chi Tiêu Bot** 🤖\n" +
+      "Trợ lý tài chính cá nhân miễn phí, an toàn & dễ sử dụng!\n\n" +
+      "👇 **Bắt đầu ngay bằng cách chọn menu bên dưới:**");
+    sendHelpMenu(senderId, senderId);
     return; 
   }
   
@@ -310,12 +337,16 @@ function handleMessage(text, senderId, senderName) {
   // Nếu là lệnh (bắt đầu bằng /) mà không match ở trên -> Lệnh sai
   if (text.startsWith("/")) {
      // Gợi ý lệnh đúng
-     var suggestion = "❌ **Lệnh không hợp lệ!**\n\n" +
-                      "Có thể bạn muốn dùng:\n" +
-                      "- `/help`: Xem hướng dẫn chi tiết\n" +
-                      "- `/list`: Xem danh sách chi tiêu\n" +
-                      "- `/report`: Xem báo cáo\n\n" +
-                      "Quét lại menu bằng cách gõ `/`";
+     var suggestion = "❌ **Lệnh không hợp lệ!**\n\n";
+     
+     if (text.startsWith("/go")) suggestion += "Bạn muốn dùng `/goal` (Mục tiêu) hay `/google`?\n👉 Thử: `/goal list`";
+     else if (text.startsWith("/re")) suggestion += "Bạn muốn dùng `/report` (Báo cáo) hay `/recurring` (Định kỳ)?\n👉 Thử: `/report`";
+     else suggestion += "Có thể bạn muốn dùng:\n" +
+                       "- `/help`: Xem hướng dẫn chi tiết\n" +
+                       "- `/list`: Xem danh sách chi tiêu\n" +
+                       "- `/report`: Xem báo cáo\n\n" +
+                       "Quét lại menu bằng cách gõ `/`";
+     
      sendText(senderId, suggestion);
      return;
   }
@@ -408,7 +439,7 @@ function handleCallbackQuery(cb) {
   // back_to_filter - Quay lại menu filter
   else if (data === "back_to_filter") {
     var userSheetId2 = getUserSheetId(senderId);
-    sendFilterButtonsCustom(senderId, userSheetId2, senderId);
+    sendFilterButtonsCustom(senderId, userSheetId2, senderId, msgId); // Pass msgId for editing
   } 
   // pagein|pageNum|month|year - Phân trang thu nhập
   else if (data.startsWith("pagein|")) {
@@ -421,23 +452,19 @@ function handleCallbackQuery(cb) {
   }
   // rec_del|ID - Xóa định kỳ
   else if (data.startsWith("rec_del|")) {
-    handleRecurringCallback(senderId, data, userSheetId, senderId);
+    handleRecurringCallback(senderId, data, userSheetId, senderId, msgId);
   }
   // debt_repay|ID - Trả nợ
   else if (data.startsWith("debt_repay|")) {
-    handleDebtCallback(senderId, data, userSheetId, senderId);
+    handleDebtCallback(senderId, data, userSheetId, senderId, msgId);
   }
   // goal_dep|ID - Nạp tiền mục tiêu
   else if (data.startsWith("goal_dep|")) {
-    handleGoalCallback(senderId, data, userSheetId, senderId);
+    handleGoalCallback(senderId, data, userSheetId, senderId, msgId);
   }
-  // goal_dep|ID - Nạp tiền mục tiêu
-  else if (data.startsWith("goal_dep|")) {
-    handleGoalCallback(senderId, data, userSheetId, senderId);
-  }
-  // Settings callbacks
+  // set_lang, set_remind|...
   else if (data.startsWith("set_")) {
-    handleSettingsCallback(senderId, msgId, data, senderId);
+    handleSettingsCallback(senderId, userSheetId, data, senderId, msgId);
   }
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
@@ -569,6 +596,54 @@ function checkAllReminders() {
 }
 
 // =============================================================================
+// SETTINGS MENU
+// =============================================================================
+
+function sendSettingsMenu(cid, telegramId) {
+  var lang = getUserLang(telegramId);
+  var langFlag = lang === 'vi' ? "🇻🇳 Tiếng Việt" : "🇬🇧 English";
+  
+  var msg = "⚙️ **CÀI ĐẶT / SETTINGS**\n\n";
+  msg += "🌐 Ngôn ngữ: " + langFlag + "\n";
+  msg += "⏰ Nhắc nhở: `/remind 21:00`\n";
+  
+  var kb = [
+     [{text: "🌐 Đổi ngôn ngữ / Switch Language", callback_data: "set_lang"}],
+     [{text: "⏰ Bật nhắc nhở (21:00)", callback_data: "set_remind|on"}],
+     [{text: "🔕 Tắt nhắc nhở", callback_data: "set_remind|off"}]
+  ];
+  
+  sendMessageKb(cid, msg, {inline_keyboard: kb});
+}
+
+function handleSettingsCallback(cid, sheetId, data, telegramId, msgId) {
+  // data: set_lang, set_remind|on, set_remind|off
+  
+  if (data === "set_lang") {
+     var cur = getUserLang(telegramId);
+     var next = cur === 'vi' ? 'en' : 'vi';
+     setUserLang(telegramId, next);
+     // Update menu in-place (don't delete) to show new language
+     sendSettingsMenu(cid, telegramId); 
+     // Wait, sendSettingsMenu sends NEW message. We should delete OLD one or edit it.
+     // Better: Delete old, send new (easier since text changes)
+     deleteMessage(cid, msgId);
+     return;
+  }
+  
+  if (data.startsWith("set_remind|")) {
+     deleteMessage(cid, msgId); // Hide menu
+     var action = data.split("|")[1];
+     if (action === "on") {
+        setupReminder(cid, "21:00", telegramId);
+     } else {
+        stopReminder(cid, telegramId);
+     }
+  }
+}
+
+
+// =============================================================================
 // SETUP FUNCTIONS
 // =============================================================================
 // Các hàm này chỉ cần chạy 1 lần sau khi deploy
@@ -589,19 +664,24 @@ function setupWebhook() {
  */
 function setupCommands() {
   var cmds = [
-    {command: "connect", description: "🔗 Kết nối Sheet"},
     {command: "start", description: "🚀 Bắt đầu"},
     {command: "help", description: "💡 Hướng dẫn"},
-    {command: "report", description: "📊 Báo cáo tháng"},
+    {command: "donate", description: "☕ Ủng hộ Bot"},
+    {command: "connect", description: "🔗 Kết nối Sheet"},
+    {command: "report", description: "📊 Báo cáo"},
     {command: "list", description: "📜 Xem chi tiêu"},
-    {command: "listin", description: "💰 Xem thu nhập"},
     {command: "budget", description: "🎯 Ngân sách"},
-    {command: "debt", description: "📒 Sổ nợ"},
     {command: "goal", description: "🏆 Mục tiêu"},
-    {command: "recurring", description: "🔄 Chi định kỳ"},
+    {command: "recurring", description: "🔄 Định kỳ"},
+    {command: "debt", description: "📒 Sổ nợ"},
+    {command: "category", description: "📂 Hạng mục"},
+    {command: "split", description: "🍰 Chia tiền"},
+    {command: "in", description: "💰 Thêm thu nhập"},
+    {command: "remind", description: "⏰ Đặt nhắc nhở"},
+    {command: "lang", description: "🌐 Đổi ngôn ngữ"},
+    {command: "backup", description: "💾 Sao lưu data"},
     {command: "export", description: "📤 Xuất dữ liệu"},
-    {command: "remind", description: "⏰ Nhắc nhở"},
-    {command: "lang", description: "🌐 Ngôn ngữ"}
+    {command: "settings", description: "⚙️ Cài đặt"}
   ];
   UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/setMyCommands", { 
     method: "post", 

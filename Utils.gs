@@ -121,6 +121,49 @@ function editMessage(cid, mid, txt) {
 }
 
 /**
+ * Xóa tin nhắn
+ * @param {string|number} cid - Chat ID
+ * @param {number} mid - Message ID
+ */
+function deleteMessage(cid, mid) {
+  try {
+    UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/deleteMessage", { 
+      method: "post", 
+      payload: { 
+        chat_id: String(cid), 
+        message_id: String(mid)
+      } 
+    });
+  } catch (e) {
+    Logger.log("deleteMessage Error: " + e);
+  }
+}
+
+/**
+ * Chỉnh sửa tin nhắn kèm Keyboard
+ * @param {string|number} cid - Chat ID
+ * @param {number} mid - Message ID
+ * @param {string} txt - Nội dung mới
+ * @param {Object} kb - Keyboard object
+ */
+function editMessageKb(cid, mid, txt, kb) {
+  try {
+    UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/editMessageText", { 
+      method: "post", 
+      payload: { 
+        chat_id: String(cid), 
+        message_id: mid, 
+        text: txt, 
+        reply_markup: JSON.stringify(kb),
+        parse_mode: "Markdown" 
+      } 
+    });
+  } catch (e) {
+    Logger.log("editMessageKb Error: " + e);
+  }
+}
+
+/**
  * Trả lời callback query (xóa loading indicator khi user bấm nút)
  * Phải gọi sau mỗi callback để Telegram không show "loading..."
  * @param {string} id - Callback Query ID
