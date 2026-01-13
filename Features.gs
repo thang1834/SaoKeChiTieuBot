@@ -477,8 +477,16 @@ function sendLangButtons(cid) {
 
 // --- OTHER FEATURES ---
 function handleDonateCommand(cid, telegramId) {
-  var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.VCB_ACC + "-compact.png";
-  sendPhoto(cid, qrUrl, t('donate_msg', telegramId));
+  // Embed Telegram ID into the QR for tracking
+  // VietQR format: https://img.vietqr.io/image/<BANK>-<ACC>-<TEMPLATE>.png?addInfo=<CONTENT>
+  var qrContent = "Donate " + telegramId;
+  var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.VCB_ACC + "-compact.png?addInfo=" + encodeURIComponent(qrContent);
+  
+  sendPhoto(cid, qrUrl, t('donate_msg', telegramId) + "\n\n" +
+    "💡 **Lưu ý quan trọng:**\n" +
+    "- **Quét QR**: Nội dung chuyển khoản đã tự động có ID của bạn.\n" +
+    "- **Chuyển thủ công**: Vui lòng ghi nội dung: `Donate " + telegramId + "`\n" +
+    "(Bot sẽ dựa vào ID này để gửi lời cảm ơn đến bạn! 💖)");
 }
 
 function searchExpenses(cid, sheetId, keyword, telegramId) { 
@@ -1097,4 +1105,193 @@ function setupDailyRecurringTrigger() {
     .create();
   
   Logger.log("Daily recurring trigger created");
+}
+
+// =============================================================================
+// SPLIT BILL FEATURE
+// =============================================================================
+
+function splitBill(cid, args, telegramId) {
+  // Syntax: /split <amount> <count> [note]
+  var parts = args.split(" ");
+  var amount = parseAmount(parts[0]);
+  
+  if (!amount) {
+    sendText(cid, "❌ Cú pháp: `/split [tổng] [số người] [nội dung]`\nVD: `/split 500k 4 Ăn lẩu`");
+    return;
+  }
+  
+  var count = parseInt(parts[1]);
+  if (!count || count < 1) {
+    sendText(cid, "❌ Số người phải lớn hơn 0");
+    return;
+  }
+  
+  var note = parts.slice(2).join(" ") || "Chia tiền";
+  var perPerson = Math.ceil(amount / count);
+  
+  var msg = "🍰 **CHIA TIỀN: " + note + "**\n";
+  msg += "💰 Tổng cộng: " + formatMoney(amount) + "\n";
+  msg += "👥 Số người: " + count + "\n";
+  msg += "💵 Mỗi người: **" + formatMoney(perPerson) + "**\n\n";
+  msg += "👇 *Copy tin nhắn dưới đây để gửi vào nhóm:*";
+  
+  sendText(cid, msg);
+  sendText(cid, "```\n" + note + "\nMỗi người: " + formatMoney(perPerson) + "\nGlobal Bank\n```");
+}
+
+// =============================================================================
+// SAVINGS GOALS FEATURE
+// =============================================================================
+
+function handleGoalCommand(cid, sheetId, args, telegramId) {
+  var parts = args.split(" ");
+  var action = parts[0] ? parts[0].toLowerCase() : '';
+  
+  // /goal - list
+  if (!action || action === 'list') {
+    listGoals(cid, sheetId, telegramId);
+    return;
+  }
+  
+  // /goal add <target> <name> [date]
+  if (action === 'add') {
+    var target = parseAmount(parts[1]);
+    if (!target) {
+      sendText(cid, "❌ Cú pháp: `/goal add [số tiền] [tên] [ngày]`\nVD: `/goal add 50m Mua xe 12/2025`");
+      return;
+    }
+    
+    // Parse name and date
+    // Heuristic: Last part matches date format?
+    var lastPart = parts[parts.length - 1];
+    var deadline = "";
+    var nameRange = parts.slice(2);
+    
+    if (lastPart.match(/\d{1,2}\/\d{4}/) || lastPart.match(/\d{1,2}\/\d{1,2}\/\d{4}/)) {
+      deadline = lastPart;
+      nameRange = parts.slice(2, parts.length - 1);
+    }
+    
+    var name = nameRange.join(" ") || "Mục tiêu";
+    addGoal(cid, sheetId, target, name, deadline, telegramId);
+    return;
+  }
+  
+  // /goal deposit <id> <amount>
+  if (action === 'deposit' || action === 'nạp' || action === 'in') {
+    var id = parts[1];
+    var amount = parseAmount(parts[2]);
+    
+    if (!id || !amount) {
+      sendText(cid, "❌ Cú pháp: `/goal deposit [ID] [số tiền]`");
+      return;
+    }
+    
+    depositGoal(cid, sheetId, id, amount, telegramId);
+    return;
+  }
+  
+  sendText(cid, "❌ Lệnh không hợp lệ.\nDùng `/goal list`, `/goal add`, hoặc `/goal deposit`.");
+}
+
+function getOrCreateGoalSheet(sheetId) {
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName('Goals');
+  if (!sheet) {
+    sheet = ss.insertSheet('Goals');
+    sheet.appendRow(['ID', 'Name', 'Target', 'Current', 'Deadline', 'Status', 'CreatedAt']);
+  }
+  return sheet;
+}
+
+function addGoal(cid, sheetId, target, name, deadline, telegramId) {
+  try {
+    var sheet = getOrCreateGoalSheet(sheetId);
+    var newId = Math.floor(Math.random() * 100000); // Simple ID
+    
+    sheet.appendRow([newId, name, target, 0, deadline, 'Active', new Date()]); // Initial Current = 0
+    
+    sendText(cid, "✅ Đã tạo mục tiêu **" + name + "**\n🎯 Đích: " + formatMoney(target) + (deadline ? ("\n📅 Hạn: " + deadline) : "") + "\nID: `" + newId + "`");
+  } catch (e) {
+    sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+function listGoals(cid, sheetId, telegramId) {
+  try {
+    var sheet = getOrCreateGoalSheet(sheetId);
+    var data = sheet.getDataRange().getValues();
+    
+    if (data.length <= 1) {
+      sendText(cid, "📭 Chưa có mục tiêu nào.\nTạo mới: `/goal add 50m Mua xe`");
+      return;
+    }
+    
+    var msg = "🏆 **MỤC TIÊU TIẾT KIỆM**\n\n";
+    
+    for (var i = 1; i < data.length; i++) {
+      var r = data[i]; // ID, Name, Target, Current, Deadline
+      var id = r[0];
+      var name = r[1];
+      var target = Number(r[2]);
+      var current = Number(r[3]);
+      var deadline = r[4];
+      var percent = target > 0 ? Math.round(current / target * 100) : 0;
+      
+      var bar = drawProgressBar(percent);
+      
+      msg += "📌 **" + name + "** (ID: `" + id + "`)\n";
+      msg += bar + " " + percent + "%\n";
+      msg += "💰 " + formatMoney(current) + " / " + formatMoney(target) + "\n";
+      if (deadline) msg += "📅 Hạn: " + deadline + "\n";
+      msg += "\n";
+    }
+    
+    msg += "👉 Nạp tiền: `/goal deposit [ID] [số tiền]`";
+    sendText(cid, msg);
+  } catch (e) {
+    sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+function depositGoal(cid, sheetId, id, amount, telegramId) {
+  try {
+    var sheet = getOrCreateGoalSheet(sheetId);
+    var data = sheet.getDataRange().getValues();
+    var found = false;
+    
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(id)) {
+        var current = Number(data[i][3]);
+        var target = Number(data[i][2]);
+        var newCurrent = current + amount;
+        
+        sheet.getRange(i + 1, 4).setValue(newCurrent);
+        
+        var percent = target > 0 ? Math.round(newCurrent / target * 100) : 0;
+        sendText(cid, "🎉 Đã nạp thêm " + formatMoney(amount) + " vào **" + data[i][1] + "**\n📈 Tiến độ: " + percent + "% (" + formatMoney(newCurrent) + "/" + formatMoney(target) + ")");
+        
+        if (newCurrent >= target && current < target) {
+            sendText(cid, "🏆 **CHÚC MỪNG! BẠN ĐÃ ĐẠT MỤC TIÊU " + data[i][1].toUpperCase() + "!** 🎆");
+        }
+        
+        found = true;
+        break;
+      }
+    }
+    
+    if (!found) sendText(cid, "❌ Không tìm thấy Goal ID: " + id);
+    
+  } catch (e) {
+    sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+function drawProgressBar(percent) {
+  var total = 10;
+  var filled = Math.round(percent / 10);
+  if (filled > 10) filled = 10;
+  var empty = total - filled;
+  return "🟩".repeat(filled) + "⬜".repeat(empty);
 }

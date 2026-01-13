@@ -189,11 +189,27 @@ function processDonations(txns) {
             
             // Send Thank You
             var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
-                        "💰 Số tiền: " + formatMoney(amt) + "\n" +
+                        "💰 Số tiền: " + formatMoney(amt) + " VNĐ\n" +
                         "📝 Nội dung: " + desc + "\n" +
                         "⏰ Thời gian: " + dateStr;
             
-            sendTelegramNotice(reply);
+            // Check for UserID in Description (Format: "Donate <UserID>")
+            var match = (desc || "").match(/Donate\s*(\d+)/i);
+            var targetUserId = match ? match[1] : null;
+            
+            if (targetUserId) {
+               // Send to the User who donated
+               sendTelegramNotice(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
+               
+               // Send notification to Admin (Owner)
+               if (String(targetUserId) !== String(myChatId)) {
+                   sendTelegramNotice(myChatId, "🔔 **Admin Alert: New Donation**\nUser: `" + targetUserId + "`\nAmount: " + formatMoney(amt) + "\nDesc: " + desc);
+               }
+            } else {
+               // Fallback: Send to default Chat ID (Owner/Group) if no ID found
+               sendTelegramNotice(myChatId, reply);
+            }
+            
             count++;
         }
         

@@ -126,6 +126,8 @@ var TEXT = {
           "🎯 **NGÂN SÁCH**\n`/budget [số] [hạng mục]`\n\n" +
           "📂 **HẠNG MỤC**\n`/category` - Xem\n`/category add/del [tên]` - Chi tiêu\n`/category in add/del [tên]` - Thu nhập\n\n" +
           "🔄 **ĐỊNH KỲ**\n`/recurring` - Xem\n`/recurring add 2m nhà monthly 1`\n\n" +
+          "🍰 **CHIA TIỀN**\n`/split 500k 4 ăn tối`\n\n" +
+          "🏆 **MỤC TIÊU**\n`/goal list`\n`/goal add 100m Xe 12/2025`\n`/goal deposit ID 2m`\n\n" +
           "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
   },
   
@@ -166,6 +168,8 @@ var TEXT = {
           "🎯 **BUDGET**\n`/budget [amount] [category]`\n\n" +
           "📂 **CATEGORIES**\n`/category` - View\n`/category add/del [name]` - Expense\n`/category in add/del [name]` - Income\n\n" +
           "🔄 **RECURRING**\n`/recurring` - View\n`/recurring add 2m rent monthly 1`\n\n" +
+          "🍰 **SPLIT BILL**\n`/split 500k 4 dinner`\n\n" +
+          "🏆 **GOALS**\n`/goal list`\n`/goal add 100m Car 12/2025`\n`/goal deposit ID 2m`\n\n" +
           "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
   }
 };

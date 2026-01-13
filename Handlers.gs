@@ -228,6 +228,18 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
+  // /split [amount] [count] [note] - Chia tiền
+  if (text.startsWith("/split ")) { 
+    splitBill(senderId, text.replace("/split ", "").trim(), senderId); 
+    return; 
+  }
+  
+  // /goal [action] ... - Mục tiêu tiết kiệm
+  if (text.startsWith("/goal")) { 
+    handleGoalCommand(senderId, userSheetId, text.replace("/goal", "").trim(), senderId); 
+    return; 
+  }
+  
   // =========================================================================
   // MẶC ĐỊNH: PARSE EXPENSE
   // =========================================================================
@@ -477,6 +489,8 @@ function setupCommands() {
     {command: "budget", description: "🎯 Ngân sách"},
     {command: "category", description: "📂 Hạng mục"},
     {command: "recurring", description: "🔄 Chi định kỳ"},
+    {command: "split", description: "🍰 Chia tiền"},
+    {command: "goal", description: "🏆 Mục tiêu"},
     {command: "filter", description: "🔍 Lọc"},
     {command: "export", description: "📤 Xuất file"},
     {command: "remind", description: "⏰ Nhắc nhở"},
