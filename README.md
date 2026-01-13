@@ -145,6 +145,11 @@
 - VD: "Vừa ăn phở 50k với uống cafe 30k" -> AI tự tách thành 2 giao dịch.
 - Cấu hình: Cần có `GEMINI_API_KEY` trong Script Properties.
 
+### 🎙 Voice Input (Mới)
+- Gõ phím mệt? Hãy gửi **Voice Note** cho Bot.
+- Bot sẽ nghe ("Mua rau 50k, thịt 100k") và tự động ghi sổ.
+- Sử dụng công nghệ Gemini 1.5 Flash (Miễn phí & Nhanh).
+
 ---
 
 ## 📁 Cấu Trúc Files

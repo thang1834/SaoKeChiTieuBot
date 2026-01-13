@@ -1616,6 +1616,10 @@ function handleSmartMessage(cid, sheetId, text, telegramId) {
      return;
   }
   
+  saveAiTransactions(cid, sheetId, transactions, telegramId);
+}
+
+function saveAiTransactions(cid, sheetId, transactions, telegramId) {
   var msg = "🤖 **AI Đã tìm thấy " + transactions.length + " giao dịch:**\n\n";
   
   transactions.forEach(function(tx) {
@@ -1633,15 +1637,6 @@ function handleSmartMessage(cid, sheetId, text, telegramId) {
     } else {
        // Handle Expense
        if (amt > 0) {
-          // If category is provided by AI, use it. If "Khác" or empty, maybe map?
-          // For simplicity, treat AI category as the category.
-          // Note: addExpense function usually requires category. 
-          // We need a way to add expense directly or handle category.
-          // existing handleSaveExpense uses Cache to store pending expense.
-          // Let's create `addExpenseDirectly` or reuse `handleSaveExpense` logic but without interactivity if possible.
-          // Currently `handleExpenseMessage` asks for category if not found.
-          // AI gives us category. So let's write to sheet directly.
-          
           addExpenseDirect(cid, sheetId, amt, tx.category, note, telegramId);
           msg += "💸 Chi: " + formatMoney(amt) + " - " + tx.category + " (" + note + ")\n";
        }

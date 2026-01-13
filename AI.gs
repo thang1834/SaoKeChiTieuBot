@@ -59,3 +59,72 @@ function parseTransactionWithAI(text) {
   }
   return null;
 }
+
+/**
+ * Xử lý Voice Note bằng Gemini 1.5 Flash
+ * @param {string} fileUrl - URL file âm thanh từ Telegram
+ * @returns {Array} Danh sách giao dịch parse được
+ */
+function processVoiceWithGemini(fileId) {
+  var apiKey = CONFIG.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  // 1. Get File Path from Telegram
+  var fileInfoUrl = "https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/getFile?file_id=" + fileId;
+  try {
+    var resp = UrlFetchApp.fetch(fileInfoUrl);
+    var json = JSON.parse(resp.getContentText());
+    if (!json.ok) return null;
+    
+    var filePath = json.result.file_path;
+    var downloadUrl = "https://api.telegram.org/file/bot" + CONFIG.BOT_TOKEN + "/" + filePath;
+    
+    // 2. Download File Blob
+    var blob = UrlFetchApp.fetch(downloadUrl).getBlob();
+    var base64 = Utilities.base64Encode(blob.getBytes());
+    var mimeType = blob.getContentType(); // usually audio/ogg or audio/mpeg
+    
+    // 3. Send to Gemini 1.5 Flash
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+    
+    var prompt = 
+      "Listen to this audio. It lists expenses. Extract them into JSON array: " +
+      "[{ \"amount\": number, \"category\": string, \"note\": string, \"type\": \"OUT\"|\"IN\" }]. " +
+      "Rules: Guess category from context. Convert spoken numbers (50 nghìn -> 50000). Return ONLY JSON.";
+
+    var payload = {
+      "contents": [{
+        "parts": [
+          { "text": prompt },
+          {
+            "inline_data": {
+              "mime_type": mimeType,
+              "data": base64
+            }
+          }
+        ]
+      }]
+    };
+    
+    var response = UrlFetchApp.fetch(url, {
+      method: "post",
+      payload: JSON.stringify(payload),
+      contentType: "application/json",
+      muteHttpExceptions: true
+    });
+    
+    var result = JSON.parse(response.getContentText());
+    
+    if (result.candidates && result.candidates.length > 0) {
+      var rawText = result.candidates[0].content.parts[0].text;
+      rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+      var transactions = JSON.parse(rawText);
+      return Array.isArray(transactions) ? transactions : [transactions];
+    }
+    
+  } catch (e) {
+    Logger.log("Gemini Voice Error: " + e);
+    logErrorToAdmin(e, "processVoiceWithGemini");
+  }
+  return null;
+}

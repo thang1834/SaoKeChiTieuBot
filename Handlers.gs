@@ -39,9 +39,17 @@ function doPost(e) {
       handleCallbackQuery(data.callback_query); 
       return; 
     }
-    if (data.message && data.message.text) { 
-      // User gửi tin nhắn text
-      handleMessage(data.message.text, senderId, senderName); 
+    if (data.message) { 
+      if (data.message.text) {
+        handleMessage(data.message.text, senderId, senderName); 
+      } else if (data.message.voice) {
+        var userSheetId = getUserSheetId(senderId);
+        if (userSheetId) {
+           handleVoiceMessage(senderId, userSheetId, data.message.voice.file_id, senderId);
+        } else {
+           sendText(senderId, t('unauth', senderId));
+        }
+      }
     }
   } catch (err) { 
     Logger.log("doPost Error: " + err); 

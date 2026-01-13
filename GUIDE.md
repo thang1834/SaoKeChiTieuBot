@@ -123,6 +123,12 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /help                     → Xem hướng dẫn
 ```
 
+### 🎙 Voice Input
+1. Nhấn nút 🎙 (Microphone) trên Telegram.
+2. Nói chi tiêu: "Sáng nay ăn phở 40 nghìn, uống cafe 25 nghìn".
+3. Thả tay để gửi.
+4. Bot sẽ tự phân tích và lưu vào Sheet.
+
 ---
 
 ## 📝 Ví Dụ Cụ Thể
