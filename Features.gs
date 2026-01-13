@@ -1313,3 +1313,182 @@ function drawProgressBar(percent) {
   var empty = total - filled;
   return "🟩".repeat(filled) + "⬜".repeat(empty);
 }
+
+// =============================================================================
+// DEBT TRACKING FEATURE (Sổ Nợ)
+// =============================================================================
+
+function handleDebtCommand(cid, sheetId, text, telegramId) {
+  // Commands:
+  // /debt borrow <amount> <person> [note]
+  // /debt lend <amount> <person> [note]
+  // /debt list
+  // /debt repay <ID> [amount]
+
+  var args = text.split(" ");
+  var action = args[0] ? args[0].toLowerCase() : '';
+  
+  if (action === "list" || !action) {
+     listDebt(cid, sheetId, telegramId);
+     return;
+  }
+  
+  if (action === "repay") {
+     var id = args[1];
+     var amt = parseAmount(args[2] || "full"); // If no amount, default to full repay logic inside
+     repayDebt(cid, sheetId, id, amt, telegramId);
+     return;
+  }
+  
+  if (action === "borrow" || action === "lend" || action === "vay" || action === "cho") {
+     var type = (action === 'vay') ? 'borrow' : (action === 'cho' ? 'lend' : action);
+     var amountStr = args[1];
+     var person = args[2];
+     var note = args.slice(3).join(" ");
+     
+     if (!amountStr || !person) {
+        sendText(cid, "❌ Thiếu thông tin!\nCú pháp: `/debt " + type + " [số tiền] [người] [ghi chú]`");
+        return;
+     }
+     
+     var amt = parseAmount(amountStr);
+     if (!amt) {
+        sendText(cid, t('invalid_num', telegramId));
+        return;
+     }
+     
+     addDebt(cid, sheetId, type, amt, person, note, telegramId);
+     return;
+  }
+  
+  sendText(cid, "❌ Lệnh không hợp lệ.\nSử dụng: `/debt [borrow|lend|list|repay]`");
+}
+
+function addDebt(cid, sheetId, type, amount, person, note, telegramId) {
+  try {
+     var sheet = getOrCreateSheetForUser(sheetId, 'Debt');
+     // Headers: ID | Date | Type | Person | Amount | Paid | Status | Note
+     
+     var id = sheet.getLastRow(); 
+     if (id === 0) {
+        sheet.appendRow(['ID', 'Date', 'Type', 'Person', 'Amount', 'Paid', 'Status', 'Note']);
+        id = 1; 
+     }
+     
+     var typeStr = (type === 'borrow') ? 'BORROW' : 'LEND';
+     
+     sheet.appendRow([id, new Date(), typeStr, person, amount, 0, 'Active', note]);
+     
+     var msg = (type === 'borrow') ? "📉 **Đã ghi nợ:**" : "📈 **Đã cho vay:**";
+     msg += "\n👤 " + person + "\n💰 " + formatMoney(amount) + "\n📝 " + (note || "Không có");
+     
+     sendText(cid, msg);
+     
+  } catch (e) {
+     Logger.log("Add Debt Error: " + e);
+     sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+function listDebt(cid, sheetId, telegramId) {
+  try {
+     var sheet = getOrCreateSheetForUser(sheetId, 'Debt');
+     var data = sheet.getDataRange().getValues();
+     
+     if (data.length <= 1) {
+       sendText(cid, "✨ Bạn không có khoản nợ nào!");
+       return;
+     }
+     
+     var msg = "📒 **SỔ NỢ (Active)**\n\n";
+     var found = false;
+     
+     for (var i = 1; i < data.length; i++) {
+        // Status = Active (Col 7 / Index 6)
+        if (data[i][6] === 'Active') {
+           found = true;
+           var type = data[i][2]; // BORROW / LEND
+           var person = data[i][3];
+           var total = Number(data[i][4]);
+           var paid = Number(data[i][5]);
+           var remain = total - paid;
+           var note = data[i][7];
+           
+           var icon = (type === 'BORROW') ? "📉 (Nợ)" : "📈 (Cho vay)";
+           
+           msg += "#" + data[i][0] + " " + icon + " **" + person + "**\n";
+           msg += "   💰 Còn: " + formatMoney(remain) + " / " + formatMoney(total) + "\n";
+           if (note) msg += "   📝 " + note + "\n";
+           msg += "\n";
+        }
+     }
+     
+     if (!found) {
+        sendText(cid, "✨ Tuyệt vời! Bạn đã sạch nợ (Hoặc đã thu hết nợ).");
+     } else {
+        msg += "👉 Trả nợ: `/debt repay [ID] [số tiền]`";
+        sendText(cid, msg);
+     }
+     
+  } catch (e) {
+     Logger.log("List Debt Error: " + e);
+     sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}
+
+function repayDebt(cid, sheetId, id, amount, telegramId) {
+  try {
+     var sheet = getOrCreateSheetForUser(sheetId, 'Debt');
+     var data = sheet.getDataRange().getValues();
+     var rowIndex = -1;
+     
+     for (var i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(id)) {
+           rowIndex = i + 1; // 1-based index
+           break;
+        }
+     }
+     
+     if (rowIndex === -1) {
+        sendText(cid, "❌ Không tìm thấy Debt ID: " + id);
+        return;
+     }
+     
+     var row = data[rowIndex - 1]; // 0-based array
+     var total = Number(row[4]);
+     var paid = Number(row[5]);
+     var currentRemain = total - paid;
+     // var type = row[2];
+     
+     // If amount is null/0/undefined ('full' from parser defaults to null usually, let's fix parser logic or handle here)
+     // parseAmount('full') returns null/0 usually. 
+     // Logic: if amount is 0 or null, treat as FULL repayment of remainder.
+     var payAmt = amount || currentRemain;
+     
+     if (payAmt > currentRemain) {
+        sendText(cid, "⚠️ Số tiền trả (" + formatMoney(payAmt) + ") > nợ còn lại (" + formatMoney(currentRemain) + ")!");
+        return;
+     }
+     
+     var newPaid = paid + payAmt;
+     var newStatus = (newPaid >= total) ? 'Done' : 'Active';
+     
+     // Update Sheet
+     sheet.getRange(rowIndex, 6).setValue(newPaid); // Paid
+     sheet.getRange(rowIndex, 7).setValue(newStatus); // Status
+     
+     var msg = "✅ **Đã cập nhật khoản nợ #" + id + "**\n";
+     msg += "💵 Vừa trả/thu: " + formatMoney(payAmt) + "\n";
+     msg += "📉 Còn lại: " + formatMoney(total - newPaid);
+     
+     if (newStatus === 'Done') {
+        msg += "\n🎉 **KHOẢN NỢ ĐÃ TẤT TOÁN!**";
+     }
+     
+     sendText(cid, msg);
+     
+  } catch (e) {
+     Logger.log("Repay Debt Error: " + e);
+     sendText(cid, "❌ Lỗi: " + e.message);
+  }
+}

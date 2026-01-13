@@ -96,6 +96,17 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /goal deposit [ID] 2m     → Nạp 2 triệu vào mục tiêu [ID]
 ```
 
+### 📒 Sổ Nợ (Debt Tracking)
+```
+# Ghi nợ
+/debt borrow 500k Lan       → Mình vay Lan 500k
+/debt lend 1m Tuấn          → Mình cho Tuấn vay 1m
+
+# Quản lý
+/debt list                  → Xem danh sách nợ (Active)
+/debt repay [ID] [số tiền]  → Trả nợ (hoặc gạch nợ đã thu)
+```
+
 ### ⏰ Nhắc Nhở
 ```
 /remind 21:00             → Đặt nhắc nhở hàng ngày

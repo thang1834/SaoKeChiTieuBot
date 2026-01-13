@@ -105,7 +105,15 @@
 |------|-------|
 | `/goal list` | Xem danh sách mục tiêu |
 | `/goal add 50m Xe 12/2025` | Tạo mục tiêu mới |
-| `/goal deposit [ID] [số]` | Nạp tiền vào mục tiêu |
+| `/goal deposit [ID] [số] | Nạp tiền vào mục tiêu |
+
+### 📒 Sổ Nợ (Debt Tracking)
+| Lệnh | Mô tả |
+|------|-------|
+| `/debt borrow [số] [ai] [ghi chú]` | Ghi nhận mình đi vay |
+| `/debt lend [số] [ai] [ghi chú]` | Ghi nhận mình cho vay |
+| `/debt list` | Xem danh sách nợ đang Active |
+| `/debt repay [ID] [số]` | Trả nợ / Gạch nợ (đã nhận) |
 
 ### ⏰ Nhắc Nhở
 | Lệnh | Mô tả |
@@ -151,8 +159,10 @@
 
 ## 🗺 Roadmap
 
-- [ ] AI Integration (Google Gemini)
-- [ ] Web Dashboard
+- [ ] **AI Integration** (Google Gemini/OpenAI): Smarter parsing.
+- [ ] **Voice Input**: Speech-to-text for transactions.
+- [ ] **Debt Tracking** (Sổ Nợ): Manage loans and debts.
+- [ ] **Web Dashboard**: Visual analytics.
 
 ---
 

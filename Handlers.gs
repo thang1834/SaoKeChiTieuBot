@@ -240,6 +240,12 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
+  // /debt [borrow|lend|list|repay] ... - Sổ nợ
+  if (text.startsWith("/debt")) { 
+    handleDebtCommand(senderId, userSheetId, text.replace("/debt", "").trim(), senderId); 
+    return; 
+  }
+  
   // =========================================================================
   // MẶC ĐỊNH: PARSE EXPENSE HOẶC BÁO LỖI
   // =========================================================================

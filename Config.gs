@@ -148,6 +148,7 @@ var TEXT = {
           "- 🍰 **Chia tiền**: `/split 500k 4 ăn tối` (chia 500k cho 4 người)\n" +
           "- 🏆 **Mục tiêu**: `/goal add 50m Mua xe 12/2025`\n" +
           "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
+          "- 📒 **Sổ nợ**: `/debt borrow 500k Name` | `/debt lend 1m Name` | `/debt list` | `/debt repay ID`\n" +
           "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
           "- 📊 **Báo cáo**: `/report`\n\n" +
           "🌐 `/lang` (Đổi ngôn ngữ) | ❤️ `/donate`"
@@ -192,6 +193,7 @@ var TEXT = {
           "🔄 **RECURRING**\n`/recurring` - View\n`/recurring add 2m rent monthly 1`\n\n" +
           "🍰 **SPLIT BILL**\n`/split 500k 4 dinner`\n\n" +
           "🏆 **GOALS**\n`/goal list`\n`/goal add 100m Car 12/2025`\n`/goal deposit ID 2m`\n\n" +
+          "📒 **DEBT**\n`/debt borrow/lend [amount] [name]`\n`/debt list` `/debt repay [ID]`\n\n" +
           "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
   }
 };
