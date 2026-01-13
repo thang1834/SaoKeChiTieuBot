@@ -14,6 +14,7 @@
 - **Nhập nhanh**: `50k cafe`, `200k tiền điện`, `/in 10m lương`
 - **Hạng mục tùy chỉnh**: Tự định nghĩa categories
 - **Chi tiêu định kỳ**: Auto-add tiền nhà, Netflix...
+- **Auto-Hide Menu**: Các menu chức năng (Sổ nợ, Mục tiêu...) tự động ẩn sau khi chọn.
 
 ### 📊 Báo Cáo
 - **Biểu đồ Doughnut**: Phân tích chi tiêu theo %
@@ -23,6 +24,7 @@
 ### 🎯 Quản Lý Ngân Sách
 - Đặt hạn mức tổng/theo hạng mục
 - **Cảnh báo real-time** khi vượt 90% hoặc 100%
+- **Tiến độ trực quan**: Thanh trạng thái 🟩 🟨 🟥 ngay trong tin nhắn báo cáo.
 - **Báo cáo tự động**: Gửi tổng kết vào sáng mùng 1 hàng tháng.
 
 ### 🛡 Hệ Thống
@@ -135,8 +137,13 @@
 ### ⚙️ Cài Đặt (Settings)
 | Lệnh | Mô tả |
 |------|-------|
-| `/settings` | Menu cài đặt tập trung (Mới) |
-| `/help` | Menu hướng dẫn tương tác |
+### ⚙️ Cài Đặt (Settings)
+| Lệnh | Mô tả |
+|------|-------|
+| `/settings` | Menu cài đặt: Ngôn ngữ & Nhắc nhở (Mới) |
+| `/lang` | Đổi ngôn ngữ (Anh/Việt) |
+| `/remind HH:MM` | Đặt nhắc nhở nhập chi tiêu |
+| `/backup` | Sao lưu dữ liệu Google Sheet |
 | `/donate` | Ủng hộ tác giả |
 
 ### 👥 Shared Finance (Mới)
@@ -165,6 +172,7 @@
 ├── Handlers.gs    # Message/callback handlers, reminders
 ├── VCB.gs         # VCB API integration
 ├── Lib.gs         # Crypto utilities
+├── Setup.gs       # Environment setup helper
 └── App.gs         # VCB scheduler
 ```
 

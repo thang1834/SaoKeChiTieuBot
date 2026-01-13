@@ -619,13 +619,15 @@ function sendLangButtons(cid) {
 function handleDonateCommand(cid, telegramId) {
   // Embed Telegram ID into the QR for tracking
   // VietQR format: https://img.vietqr.io/image/<BANK>-<ACC>-<TEMPLATE>.png?addInfo=<CONTENT>
-  var qrContent = "Donate " + telegramId;
+  // Use template 1SSGSl9.png
+  // New format: ID + Content (e.g. "123456 Donate")
+  var qrContent = telegramId + " Donate";
   var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.VCB_ACC + "-compact.png?addInfo=" + encodeURIComponent(qrContent);
   
   sendPhoto(cid, qrUrl, t('donate_msg', telegramId) + "\n\n" +
     "💡 **Lưu ý quan trọng:**\n" +
     "- **Quét QR**: Nội dung chuyển khoản đã tự động có ID của bạn.\n" +
-    "- **Chuyển thủ công**: Vui lòng ghi nội dung: `Donate " + telegramId + "`\n" +
+    "- **Chuyển thủ công**: Vui lòng ghi nội dung: `" + telegramId + " Donate`\n" +
     "(Bot sẽ dựa vào ID này để gửi lời cảm ơn đến bạn! 💖)");
 }
 

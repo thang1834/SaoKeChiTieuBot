@@ -33,6 +33,7 @@ Bạn muốn tự chạy bot trên tài khoản Google của mình? Miễn phí 
 | `App.gs` | VCB automation |
 | `VCB.gs` | VCB API integration |
 | `Lib.gs` | Crypto utilities |
+| `Setup.gs` | Environment Setup |
 
 3. Lưu (Ctrl+S), đặt tên `SaoKeChiTieuBot`
 
@@ -56,11 +57,14 @@ Bạn muốn tự chạy bot trên tài khoản Google của mình? Miễn phí 
 | `VCB_USER` | Số điện thoại VCB |
 | `VCB_PASS` | Mật khẩu VCB |
 | `VCB_ACC` | Số tài khoản |
+| `VCB_BROWSER_ID` | String | Browser ID (Persistent Login) |
+| `LAST_VCB_TXN_ID` | String | Tránh trùng lặp giao dịch |
+| `LANG` | `vi` hoặc `en` | Ngôn ngữ mặc định |
 
 > Cần lấy `browserId` từ: https://netrotion.github.io/VCB-BrowserID/
 
 ### ⚡ Cách cấu hình nhanh (Khuyên dùng)
-Thay vì nhập thủ công từng dòng, bạn có thể dùng file `Setup.gs`:
+Thay vì nhập thủ công từng dòng, bạn NÊN dùng file `Setup.gs` (đã cập nhật đầy đủ biến):
 1. Mở file **`Setup.gs`**.
 2. Điền thông tin vào các biến trong hàm `setupEnvironment()`.
 3. Chọn hàm `setupEnvironment` trên thanh công cụ và bấm **Run**.

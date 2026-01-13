@@ -32,7 +32,12 @@ function setupEnvironment() {
     // 6. Vietcombank (Tùy chọn - Nếu dùng tính năng tự động VCB)
     'VCB_USER': '', // Số điện thoại
     'VCB_PASS': '', // Mật khẩu
-    'VCB_ACC':  ''  // Số tài khoản
+    'VCB_ACC':  '',  // Số tài khoản
+    'VCB_BROWSER_ID': '', // Browser ID (Optional - For persistent login)
+    'LAST_VCB_TXN_ID': '', // Track last transaction to avoid dupes
+
+    // 7. Khác
+    'LANG': 'vi' // Ngôn ngữ mặc định (vi/en)
   };
 
   // --- KHÔNG SỬA CODE BÊN DƯỚI ---

@@ -37,6 +37,7 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /undoin                   → Xóa thu nhập cuối
 /deletein 5               → Xóa thu nhập ID #5
 /searchin lương           → Tìm kiếm thu nhập
+/in 10m thưởng tết        → Thêm thu nhập 10 triệu
 ```
 > 🔒 **Donate** không thể xóa
 
@@ -82,7 +83,7 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ### 🍰 Chia Tiền
 ```
 /split 500k 4 ăn lẩu      → Chia 500k cho 4 người
-                          → Bot tính hộ: 125k/người
+                          → Bot tạo hóa đơn dạng Receipt (dễ copy)
                           → Tạo tin nhắn mẫu để copy
 ```
 
@@ -117,8 +118,9 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ### ⚙️ Cài Đặt
 ```
 /settings                 → Menu cài đặt (Ngôn ngữ / Nhắc nhở)
-/help                     → Xem hướng dẫn (Menu tương tác)
-/donate                   → Ủng hộ tác giả
+/lang                     → Đổi ngôn ngữ trực tiếp
+/backup                   → Tạo bản sao lưu Sheet vào Drive
+/donate                   → Thông tin donate
 ```
 
 ### 🎙 Voice Input
