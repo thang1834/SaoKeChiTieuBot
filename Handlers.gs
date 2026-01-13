@@ -33,6 +33,9 @@ function doPost(e) {
     var senderId = data.callback_query ? data.callback_query.from.id : data.message.from.id;
     var senderName = data.callback_query ? data.callback_query.from.first_name : data.message.from.first_name;
 
+    // Capture User Info (Auto-save to DB)
+    captureUser(senderId, senderName);
+
     // Phân loại request
     if (data.callback_query) { 
       // User bấm inline button

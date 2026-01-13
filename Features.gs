@@ -622,7 +622,7 @@ function handleDonateCommand(cid, telegramId) {
   // Use template 1SSGSl9.png
   // New format: ID + Content (e.g. "123456 Donate")
   var qrContent = telegramId + " Donate";
-  var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.VCB_ACC + "-compact.png?addInfo=" + encodeURIComponent(qrContent);
+  var qrUrl = "https://img.vietqr.io/image/VCB-" + CONFIG.VCB_ACC + "-1SSGSl9.png?addInfo=" + encodeURIComponent(qrContent);
   
   sendPhoto(cid, qrUrl, t('donate_msg', telegramId) + "\n\n" +
     "💡 **Lưu ý quan trọng:**\n" +

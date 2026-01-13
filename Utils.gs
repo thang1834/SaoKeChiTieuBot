@@ -457,26 +457,87 @@ function registerUser(telegramId, sheetId, name) {
     return false;
   }
 }
+/**
+ * Lưu thông tin user vào Master Sheet nếu chưa tồn tại
+ * Dùng cache để tránh đọc/ghi liên tục
+ */
+function captureUser(telegramId, name) {
+    if (!CONFIG.MASTER_SHEET_ID || !telegramId) return;
+    
+    var cache = CacheService.getScriptCache();
+    // Check cache first (flag 'known_user_ID')
+    if (cache.get("known_user_" + telegramId)) return;
+    
+    try {
+        var ss = SpreadsheetApp.openById(CONFIG.MASTER_SHEET_ID);
+        var sheet = ss.getSheetByName('Users');
+        
+        if (!sheet) {
+            sheet = ss.insertSheet('Users');
+            sheet.appendRow(['TelegramID', 'SheetID', 'Name', 'JoinedDate', 'Language', 'ReminderTime']);
+        }
+        
+        var data = sheet.getDataRange().getValues();
+        var exists = false;
+        
+        // Check if user exists
+        for (var i = 1; i < data.length; i++) {
+            if (String(data[i][0]) === String(telegramId)) {
+                exists = true;
+                // Update Name if empty or changed? Optional.
+                // For now just mark as exists.
+                break;
+            }
+        }
+        
+        if (!exists) {
+            sheet.appendRow([
+                String(telegramId), 
+                "", // SheetID empty until /connect
+                name, 
+                new Date(), 
+                CONFIG.DEFAULT_LANG, 
+                "" // ReminderTime
+            ]);
+            Logger.log("Captured new user: " + name + " (" + telegramId + ")");
+        }
+        
+        // Cache this user as known for 6 hours
+        cache.put("known_user_" + telegramId, "true", 21600);
+        
+        // Also cache the name for getSenderName
+        cache.put("name_" + telegramId, name, 21600);
+        
+    } catch(e) {
+        Logger.log("captureUser Error: " + e);
+    }
+}
 
 function getSenderName(telegramId) {
    // Try cache or Users Sheet
    var cache = CacheService.getScriptCache();
-   var name = cache.get("name_" + telegramId);
-   if (name) return name;
+   var cachedName = cache.get("name_" + telegramId);
+   if (cachedName) return cachedName;
    
    if (CONFIG.MASTER_SHEET_ID) {
       try {
          var ss = SpreadsheetApp.openById(CONFIG.MASTER_SHEET_ID);
          var sheet = ss.getSheetByName('Users');
          var data = sheet.getDataRange().getValues();
+         // Column A: TelegramID, C: Name
          for(var i=1; i<data.length; i++) {
-            if(String(data[i][0]) === String(telegramId)) {
-               name = data[i][2]; // Name
-               cache.put("name_" + telegramId, name, CONFIG.CACHE_DURATION);
-               return name;
+            // Loose comparison to handle string/number differences
+            if(data[i][0] == telegramId) {
+               var name = data[i][2]; // Name
+               if (name) {
+                   cache.put("name_" + telegramId, name, CONFIG.CACHE_DURATION);
+                   return name;
+               }
             }
          }
-      } catch(e) {}
+      } catch(e) {
+          Logger.log("getSenderName Error: " + e);
+      }
    }
    return "Unknown";
 }

@@ -136,22 +136,50 @@ function processDonations(txns) {
   var props = PropertiesService.getScriptProperties();
   var lastId = props.getProperty('LAST_VCB_TXN_ID') || "0";
   
+  Logger.log("Probable Last ID: " + lastId);
+  
+  // Find the index of the last processed ID in the current list
+  // VCB List is usually [Newest, ..., Oldest]
+  var lastIdIndex = -1;
+  for (var k = 0; k < txns.length; k++) {
+      var tRef = txns[k].Reference || txns[k].reference;
+      if (tRef === lastId) {
+          lastIdIndex = k;
+          break;
+      }
+  }
+  
+  Logger.log("Last ID found at index: " + lastIdIndex + " (List length: " + txns.length + ")");
+  
   var newLastId = lastId;
   var count = 0;
+
+  // Iterate from oldest to newest (Reverse order of checking, but valid for processing)
+  // Logic: 
+  // - If lastIdIndex == -1 (Not found): Assume ALL are new (since we run every 10 mins).
+  // - If lastIdIndex > -1: Process only items with index < lastIdIndex (Newer items).
   
-  // Iterate from oldest to newest (if VCB returns sorted by date DESC, we need to process reverse? 
-  // Usually VCB returns newest first. So looping i = length-1 to 0 processes OLDEST first, which is correct for updating lastId.)
   for (var i = txns.length - 1; i >= 0; i--) {
+     // Skip if we found the lastId and this item is older or equal to it
+     if (lastIdIndex !== -1 && i >= lastIdIndex) {
+         continue;
+     }
+
      var t = txns[i];
      
-     // Normalize Keys (VCB returns capitalized keys: Reference, Amount, Description, CD, TransactionDate)
+     // Normalize Keys
      var ref = t.Reference || t.reference;
+     
+     // Update newLastId to the current ref (as we iterate Old -> New, the final value will be the newest)
+     newLastId = ref;
      var rawAmount = t.Amount || t.amount || "0";
      var desc = t.Description || t.description || "";
      var dateStr = t.TransactionDate || t.transactionDate || t.tranDate; // "13/01/2026"
      var cd = t.CD || t.dorc; // "+" or "C"
      
-     if (compareTxnId(ref, lastId) > 0) {
+     Logger.log("Processing New Txn: " + ref);
+     
+     if (true) {
         // Parse Amount
         var amt = 0;
         if (typeof rawAmount === 'string') {
@@ -169,10 +197,6 @@ function processDonations(txns) {
         }
         
         // --- NEW: Parse Time & Clean Description from VCB 24/7 Prefix ---
-        // Example: 0200970422011305284920265LUL786866.84733.052850.Toi tu donate minh
-        // Regex to find Time (HHmmss) near Year (YYYY)
-        // Look for: MMDD(HHmmss)YYYY
-        // 0113(052849)2026
         var timeMatch = desc.match(/\d{4}(\d{6})\d{4}/); 
         if (timeMatch) {
             var fullTime = timeMatch[1]; // 052849
@@ -183,15 +207,12 @@ function processDonations(txns) {
         }
         
         // Clean Description: Remove technical prefix
-        // Strategy: Split by dot. Remove parts that are purely digits or very long alphanumeric.
-        // Or if we found the technical pattern, strip it.
         var cleanDesc = desc;
-        if (desc.length > 30 && /^\d+/.test(desc)) { // Starts with digits and is long
+        if (desc.length > 30 && /^\d+/.test(desc)) { 
             var parts = desc.split('.');
             var startIndex = 0;
             for(var k=0; k<parts.length; k++) {
                 var p = parts[k];
-                // If part is all digits OR part is very long (>15 chars) no spaces
                 if (/^\d+$/.test(p) || (p.length > 15 && !p.includes(' '))) {
                    startIndex++;
                 } else {
@@ -202,138 +223,110 @@ function processDonations(txns) {
                 cleanDesc = parts.slice(startIndex).join('.').trim();
             }
         }
+        desc = cleanDesc; 
         
-        // Use cleaned description for further processing
-        desc = cleanDesc;
-        // ----------------------------------------------------------------
+        // --- ID DETECTION LOGIC ---
+        // Priority:
+        // 1. "Donate <ID>"
+        // 2. "<ID> Donate"
+        // 3. Start with <ID> (9-15 digits)
         
-        // Check if Income (Credit)
-        // CD="+" implies Credit (Incoming money)
+        var targetUserId = null;
+        var msgContent = desc;
+        
+        var m1 = desc.match(/Donate\s*(\d{9,15})/i);
+        var m2 = desc.match(/(\d{9,15})\s*Donate/i);
+        var m3 = desc.match(/^(\d{9,15})\b/); // ID at the start
+        
+        if (m1) {
+            targetUserId = m1[1];
+            msgContent = desc.replace(m1[0], "").trim();
+        } else if (m2) {
+            targetUserId = m2[1];
+            msgContent = desc.replace(m2[0], "").trim();
+        } else if (m3) {
+            targetUserId = m3[1];
+            msgContent = desc.replace(m3[0], "").trim();
+        }
+        
+        // Detect generic "Donate" keyword (optional now since valid even without it)
+        // var hasDonateKeyword = /donate|ung ho|quyen gop/i.test(desc);
+        
+        var category = "Donate"; 
+
+        // Clean up message content
+        if (!msgContent || msgContent.length < 2) msgContent = "Mời cafe";
+        msgContent = msgContent.replace(/^[:\-\.]+\s*/, ""); 
+        
+        // Resolve Name
+        var displayName = "Ẩn danh"; // Default if no ID found
+        
+        if (targetUserId) {
+             var savedName = getSenderName(targetUserId);
+             if (savedName && savedName !== "Unknown") {
+                 displayName = savedName;
+             } else {
+                 displayName = "User " + targetUserId;
+             }
+        }
+        
+        // Format Note: "Name: Content"
+        var sheetNote = displayName + ": " + msgContent;
+
+        // --- SAVE TO SHEET ---
+        // VCB: CD = "+" or "C" (Credit/Incoming). "D" or "-" (Debit/Outgoing).
+        // Only process Incoming.
         if (cd === '+' || cd === 'C' || (cd === undefined && amt > 0)) {
-            
-            // Save to Income sheet (Admin)
             try {
               if (masterSheetId) {
                 var ss = SpreadsheetApp.openById(masterSheetId);
                 var sheet = ss.getSheetByName('Income');
                 if (!sheet) {
                   sheet = ss.insertSheet('Income');
-                  sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú']);
+                  sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú', 'Người gửi']);
                 }
                 
-                // Check if Donate contains UserID (Handle both "Donate <ID>" and "<ID> Donate")
-                // Case 1: Donate <ID>
-                var match1 = (desc || "").match(/Donate\s*(\d+)/i);
-                // Case 2: <ID> Donate
-                var match2 = (desc || "").match(/(\d+)\s*Donate/i);
-                
-                var foundId = null;
-                if (match1) foundId = match1[1];
-                else if (match2) foundId = match2[1];
-
-                var saveNote = desc || "Bank Transfer";
-                
-                if (foundId) {
-                   var uName = getSenderName(foundId);
-                   if (uName && uName !== "Unknown") {
-                      // Replace ONLY the ID + Keyword with Name
-                      // But the requirement is: "User A: <Note>"
-                      // Let's strip the ID and keyword out first.
-                      var msgOnly = desc.replace(/Donate\s*\d+/i, "").replace(/\d+\s*Donate/i, "").trim();
-                      if (!msgOnly) msgOnly = "Mời cafe";
-                      
-                      saveNote = uName + ": " + msgOnly;
-                   }
-                }
-                
-                sheet.appendRow([sheet.getLastRow(), txnDate, amt, "Donate", saveNote]);
+                sheet.appendRow([sheet.getLastRow(), txnDate, amt, category, sheetNote, displayName]);
               }
             } catch(e) {
               Logger.log("Save Donate Error: " + e);
             }
             
-            // Send Thank You
-            var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
-                        "💰 Số tiền: " + formatMoney(amt) + " VNĐ\n" +
-                        "📝 Nội dung: " + desc + "\n" +
-                        "⏰ Thời gian: " + dateStr;
-            
-            // Check for UserID in Description
-            // Case 1: Donate <ID>
-            var m1 = (desc || "").match(/Donate\s*(\d+)/i);
-            // Case 2: <ID> Donate
-            var m2 = (desc || "").match(/(\d+)\s*Donate/i);
-            
-            var targetUserId = null;
-            if (m1) targetUserId = m1[1];
-            else if (m2) targetUserId = m2[1];
-            
-            // Resolve Display Name & Note
-            var displayNote = desc;
-            var displayName = "Mạnh Thường Quân";
-            
-            if (targetUserId) {
-               // Try to get Name from System
-               var name = getSenderName(targetUserId); 
-               if (name && name !== "Unknown") {
-                  displayName = name;
-                  
-                  // Format: "User A: <Msg>"
-                  var msgBody = desc.replace(/Donate\s*\d+/i, "").replace(/\d+\s*Donate/i, "").trim();
-                  if (!msgBody) msgBody = "Đã nhận được tiền!";
-                  
-                  displayNote = msgBody;
-               }
-            }
-            var displayName = "Mạnh Thường Quân";
-            
-            if (targetUserId) {
-               // Try to get Name from System
-               var name = getSenderName(targetUserId); 
-               if (name && name !== "Unknown") {
-                  displayName = name;
-                  // Replace "Donate <ID>" with Name in note
-                  displayNote = desc.replace(/Donate\s*\d+/i, displayName);
-               }
-            }
-
-            // Update row with resolved Name only if we found the user
-            if (targetUserId && displayName !== "Mạnh Thường Quân") {
-               try {
-                   // Re-update the last row (we just appended it above at line 184)
-                   // Actually, efficient way is to modify line 184. But let's overwrite it for clarity or modify logic above.
-                   // Since we have 'sheet' in scope? No, 'sheet' is inside try block above.
-                   // Let's modify the append logic at line 184 instead of updating later.
-               } catch(e) {}
-            }
-            
-            // Wait, let's restructure slightly to do lookup BEFORE saving.
-            
-            // Send Thank You
+            // --- NOTIFICATIONS ---
             var reply = "💖 **CẢM ƠN BẠN ĐÃ DONATE** 💖\n" +
                         "💰 Số tiền: " + formatMoney(amt) + " VNĐ\n" +
                         "👤 Người gửi: " + displayName + "\n" + 
-                        "📝 Nội dung: " + displayNote + "\n" +
+                        "📝 Nội dung: " + msgContent + "\n" +
                         "⏰ Thời gian: " + dateStr;
             
+            var userNotified = false;
+            
+            // 1. Notify User (if ID found)
             if (targetUserId) {
-               // Send to the User who donated
-               sendTelegramNotice(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
-               
-               // Send notification to Admin (Owner)
-               if (String(targetUserId) !== String(myChatId)) {
-                   sendTelegramNotice(myChatId, "🔔 **Admin Alert: New Donation**\nUser: `" + displayName + "` (" + targetUserId + ")\nAmount: " + formatMoney(amt) + "\nNote: " + displayNote);
+               try {
+                   sendTelegramNotice(targetUserId, reply + "\n\n🤖 *Bot đã nhận được tấm lòng của bạn!*");
+                   userNotified = true;
+               } catch(e) {
+                   Logger.log("Failed to notify user " + targetUserId + ": " + e);
                }
+            }
+            
+            // 2. Notify Admin (ALWAYS)
+            if (String(targetUserId) !== String(myChatId)) {
+                var adminMsg = "🔔 **Admin Alert: New Donation**\n" +
+                               "User: `" + displayName + "` (" + (targetUserId || "Unknown") + ")\n" +
+                               "Amount: " + formatMoney(amt) + "\n" +
+                               "Note: " + msgContent + "\n" + 
+                               "Status: " + (userNotified ? "✅ User Notified" : "⚠️ User NOT Notified");
+                               
+                sendTelegramNotice(myChatId, adminMsg);
             } else {
-               // Fallback
-               sendTelegramNotice(myChatId, reply);
+                // If Admin donated to themselves
+                 sendTelegramNotice(myChatId, reply);
             }
             
             count++;
         }
-        
-        // Update newLastId
-        if (compareTxnId(ref, newLastId) > 0) newLastId = ref;
      }
   }
   
