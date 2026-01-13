@@ -1321,6 +1321,7 @@ function listGoals(cid, sheetId, telegramId) {
     }
     
     var msg = "🏆 **MỤC TIÊU TIẾT KIỆM**\n\n";
+    var kb = [];
     
     for (var i = 1; i < data.length; i++) {
       var r = data[i]; // ID, Name, Target, Current, Deadline
@@ -1338,13 +1339,37 @@ function listGoals(cid, sheetId, telegramId) {
       msg += "💰 " + formatMoney(current) + " / " + formatMoney(target) + "\n";
       if (deadline) msg += "📅 Hạn: " + deadline + "\n";
       msg += "\n";
+      
+      // Inline button to Deposit
+      // callback: goal_dep|ID
+      kb.push([{text: "💰 Nạp tiền vào " + name, callback_data: "goal_dep|" + id}]);
     }
     
-    msg += "👉 Nạp tiền: `/goal deposit [ID] [số tiền]`";
-    sendText(cid, msg);
+    msg += "👉 Bấm nút để nạp nhanh, hoặc dùng lệnh `/goal deposit [ID] [số tiền]`";
+    sendMessageKb(cid, msg, {inline_keyboard: kb});
+    
   } catch (e) {
     sendText(cid, "❌ Lỗi: " + e.message);
   }
+}
+
+// HANDLE GOAL CALLBACK
+function handleGoalCallback(cid, data, sheetId, telegramId) {
+    // data: goal_dep|ID
+    var parts = data.split("|");
+    var action = parts[0];
+    var id = parts[1];
+    
+    if (action === "goal_dep") {
+       // Ask for amount
+       sendText(cid, "💰 Xin hãy nhập số tiền bạn muốn nạp (VD: `500k`):");
+       
+       // Set Cache state to wait for reply
+       // Key: "await_goal_dep_" + senderId
+       // Value: GoalID
+       var cache = CacheService.getScriptCache();
+       cache.put("await_goal_" + telegramId, id, 300); // 5 mins
+    }
 }
 
 function depositGoal(cid, sheetId, id, amount, telegramId) {

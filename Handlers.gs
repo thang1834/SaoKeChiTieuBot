@@ -70,6 +70,31 @@ function doPost(e) {
  * @param {string} senderName - Tên user trên Telegram
  */
 function handleMessage(text, senderId, senderName) {
+  // Check if waiting for user input (Goal Deposit)
+  var cache = CacheService.getScriptCache();
+  var pendingGoalId = cache.get("await_goal_" + senderId);
+  
+  if (pendingGoalId) {
+     var amt = parseAmount(text);
+     if (amt) {
+        var userSheetId = getUserSheetId(senderId);
+        depositGoal(senderId, userSheetId, pendingGoalId, amt, senderId);
+        cache.remove("await_goal_" + senderId); // Clear payload
+        return;
+     } else {
+        // If user typed something that is not money (like /cancel), clear cache
+        if (text === "/cancel") {
+           cache.remove("await_goal_" + senderId);
+           sendText(senderId, "❌ Đã hủy nạp tiền.");
+           return;
+        }
+        // Else, simple warning or let it pass through? 
+        // Better let it pass if it's a command, but if it looks like amount, consume it.
+        // Let's consume it and warn to keep flow sticky.
+        sendText(senderId, "❌ Số tiền không hợp lệ. Vui lòng nhập lại (VD: 500k) hoặc gõ `/cancel` để hủy.");
+        return; 
+     }
+  }
   
   // =========================================================================
   // LỆNH CÔNG KHAI (không cần đăng nhập)
@@ -395,6 +420,10 @@ function handleCallbackQuery(cb) {
   // debt_repay|ID - Trả nợ
   else if (data.startsWith("debt_repay|")) {
     handleDebtCallback(senderId, data, userSheetId, senderId);
+  }
+  // goal_dep|ID - Nạp tiền mục tiêu
+  else if (data.startsWith("goal_dep|")) {
+    handleGoalCallback(senderId, data, userSheetId, senderId);
   }
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
