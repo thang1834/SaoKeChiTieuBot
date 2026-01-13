@@ -1526,3 +1526,70 @@ function repayDebt(cid, sheetId, id, amount, telegramId) {
      sendText(cid, "❌ Lỗi: " + e.message);
   }
 }
+
+// =============================================================================
+// PHASE 11: ADVANCED EXPORT & BACKUP
+// =============================================================================
+
+function handleBackupCommand(cid, sheetId, telegramId) {
+  try {
+     var ss = SpreadsheetApp.openById(sheetId);
+     var name = ss.getName();
+     var now = new Date();
+     var timeStr = Utilities.formatDate(now, "GMT+7", "yyyy-MM-dd_HH-mm");
+     var backupName = name + "_Backup_" + timeStr;
+     
+     // Copy File
+     var file = DriveApp.getFileById(sheetId);
+     var backupFile = file.makeCopy(backupName);
+     var url = backupFile.getUrl();
+     
+     sendText(cid, "✅ **Backup thành công!**\n📂 File: [" + backupName + "](" + url + ")");
+  } catch (e) {
+     Logger.log("Backup Error: " + e);
+     logErrorToAdmin(e, "handleBackupCommand");
+     sendText(cid, "❌ Lỗi Backup: " + e.message);
+  }
+}
+
+function exportPdf(cid, sheetId, telegramId) {
+  try {
+     // Export 'Expense' sheet as PDF via HTML Service
+     var ss = SpreadsheetApp.openById(sheetId);
+     var expenseSheet = ss.getSheetByName('Expense');
+     var data = expenseSheet.getDataRange().getValues();
+     
+     // HEADER
+     var html = "<h1>SaoKeChiTieuBot Report</h1>";
+     html += "<h3>Created at: " + new Date().toLocaleString() + "</h3>";
+     html += "<table border='1' style='border-collapse: collapse; width: 100%;'>";
+     html += "<tr><th>Date</th><th>Amount</th><th>Category</th><th>Note</th></tr>";
+     
+     // DATA (Limit to last 50 for performance/size)
+     var limit = 50;
+     var start = Math.max(1, data.length - limit);
+     
+     for (var i = start; i < data.length; i++) {
+        var row = data[i];
+        // Col 1=Date, 2=Amount, 3=Category, 4=Note
+        html += "<tr>";
+        html += "<td>" + row[1] + "</td>";
+        html += "<td>" + formatMoney(row[2]) + "</td>";
+        html += "<td>" + row[3] + "</td>";
+        html += "<td>" + row[4] + "</td>";
+        html += "</tr>";
+     }
+     html += "</table>";
+     
+     var blob = Utilities.newBlob(html, "text/html", "Report.html");
+     var pdf = blob.getAs("application/pdf");
+     pdf.setName("Report_" + Utilities.formatDate(new Date(), "GMT+7", "yyyyMMdd") + ".pdf");
+     
+     sendDocument(cid, pdf);
+     
+  } catch (e) {
+     Logger.log("Export PDF Error: " + e);
+     logErrorToAdmin(e, "exportPdf");
+     sendText(cid, "❌ Lỗi xuất PDF: " + e.message);
+  }
+}

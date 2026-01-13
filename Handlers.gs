@@ -247,6 +247,22 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
+  // /backup - Sao lưu dữ liệu
+  if (text.startsWith("/backup")) {
+     handleBackupCommand(senderId, userSheetId, senderId);
+     return;
+  }
+  
+  // /export - Xuất dữ liệu (CSV or PDF)
+  if (text.startsWith("/export")) {
+     if (text.includes("pdf")) {
+       exportPdf(senderId, userSheetId, senderId);
+     } else {
+       handleExportCommand(senderId, userSheetId, senderId);
+     }
+     return;
+  }
+  
   // =========================================================================
   // MẶC ĐỊNH: PARSE EXPENSE HOẶC BÁO LỖI
   // =========================================================================

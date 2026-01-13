@@ -58,6 +58,25 @@ function sendPhoto(cid, url, caption) {
 }
 
 /**
+ * Gửi file (document) đến user (PDF, CSV...)
+ * @param {string|number} cid - Chat ID
+ * @param {Blob} fileBlob - File blob cần gửi
+ */
+function sendDocument(cid, fileBlob) {
+  try {
+    UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/sendDocument", { 
+      method: "post", 
+      payload: { 
+        chat_id: String(cid), 
+        document: fileBlob
+      } 
+    });
+  } catch (e) {
+    Logger.log("sendDocument Error: " + e);
+  }
+}
+
+/**
  * Gửi tin nhắn với Inline Keyboard (các nút bấm)
  * @param {string|number} cid - Chat ID
  * @param {string} txt - Nội dung tin nhắn

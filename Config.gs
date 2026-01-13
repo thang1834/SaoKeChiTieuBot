@@ -150,7 +150,8 @@ var TEXT = {
           "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
           "- 📒 **Sổ nợ**: `/debt borrow 500k Name` | `/debt lend 1m Name` | `/debt list` | `/debt repay ID`\n" +
           "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
-          "- 📊 **Báo cáo**: `/report`\n\n" +
+          "- 📊 **Báo cáo**: `/report` (Auto)\n" +
+          "- 📤 **Backup/Export**: `/backup` | `/export pdf` | `/export csv`\n\n" +
           "🌐 `/lang` (Đổi ngôn ngữ) | ❤️ `/donate`"
   },
   

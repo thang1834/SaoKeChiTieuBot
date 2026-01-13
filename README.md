@@ -23,6 +23,11 @@
 ### 🎯 Quản Lý Ngân Sách
 - Đặt hạn mức tổng/theo hạng mục
 - **Cảnh báo real-time** khi vượt 90% hoặc 100%
+- **Báo cáo tự động**: Gửi tổng kết vào sáng mùng 1 hàng tháng.
+
+### 🛡 Hệ Thống
+- **Admin Alerts**: Báo cáo lỗi hệ thống tức thì cho Admin.
+- **Auto-Retry**: Cơ chế tự động thử lại khi VCB lỗi.
 
 ### 🏦 VCB Integration
 - Tự động theo dõi biến động số dư
@@ -114,6 +119,13 @@
 | `/debt lend [số] [ai] [ghi chú]` | Ghi nhận mình cho vay |
 | `/debt list` | Xem danh sách nợ đang Active |
 | `/debt repay [ID] [số]` | Trả nợ / Gạch nợ (đã nhận) |
+
+### 📤 Export & Backup
+| Lệnh | Mô tả |
+|------|-------|
+| `/backup` | Tạo bản sao Google Sheet lưu vào Drive |
+| `/export pdf` | Xuất báo cáo dạng PDF |
+| `/export` | Xuất dữ liệu dạng CSV (mặc định) |
 
 ### ⏰ Nhắc Nhở
 | Lệnh | Mô tả |

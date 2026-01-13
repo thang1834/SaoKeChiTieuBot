@@ -43,10 +43,13 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ### 📊 Báo Cáo
 ```
 /report                   → Báo cáo tháng (có biểu đồ)
+                          → (Bot tự gửi báo cáo vào sáng mùng 1 hàng tháng)
 /report 12/2025           → Báo cáo tháng cụ thể
 /list                     → Danh sách giao dịch
 /filter                   → Lọc theo hạng mục
 /export                   → Xuất file CSV
+/export pdf               → Xuất file PDF (Báo cáo tháng)
+/backup                   → Sao lưu dữ liệu (Tạo bản copy trên Drive)
 ```
 
 ### 🎯 Ngân Sách
