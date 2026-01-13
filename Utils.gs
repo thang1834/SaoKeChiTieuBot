@@ -259,9 +259,9 @@ function getOrCreateSheetForUser(targetSheetId, name) {
     
     // Thêm header tùy theo loại sheet
     if (name === 'Income') {
-      sheet.appendRow(["STT", "Thời gian", "Số tiền", "Hạng mục", "Ghi chú"]);
+      sheet.appendRow(["STT", "Thời gian", "Số tiền", "Hạng mục", "Ghi chú", "Người thu"]);
     } else if (name === 'Expense') {
-      sheet.appendRow(["STT", "Ngày", "Số tiền", "Hạng mục", "Ghi chú"]);
+      sheet.appendRow(["STT", "Ngày", "Số tiền", "Hạng mục", "Ghi chú", "Người chi"]);
     } else if (name === 'Budget') {
       sheet.appendRow(["STT", "Category", "Limit"]);
     } else if (name === 'Categories') {
@@ -413,6 +413,29 @@ function registerUser(telegramId, sheetId, name) {
     Logger.log("Register Error: " + e);
     return false;
   }
+}
+
+function getSenderName(telegramId) {
+   // Try cache or Users Sheet
+   var cache = CacheService.getScriptCache();
+   var name = cache.get("name_" + telegramId);
+   if (name) return name;
+   
+   if (CONFIG.MASTER_SHEET_ID) {
+      try {
+         var ss = SpreadsheetApp.openById(CONFIG.MASTER_SHEET_ID);
+         var sheet = ss.getSheetByName('Users');
+         var data = sheet.getDataRange().getValues();
+         for(var i=1; i<data.length; i++) {
+            if(String(data[i][0]) === String(telegramId)) {
+               name = data[i][2]; // Name
+               cache.put("name_" + telegramId, name, CONFIG.CACHE_DURATION);
+               return name;
+            }
+         }
+      } catch(e) {}
+   }
+   return "Unknown";
 }
 
 // =============================================================================

@@ -105,6 +105,28 @@ function sendReport(cid, sheetId, arg, telegramId) {
       var percent = totalOut > 0 ? Math.round(catTotals[cat] / totalOut * 100) : 0;
       msg += "• " + cat + ": " + formatMoney(catTotals[cat]) + " (" + percent + "%)\n";
     }
+
+    // Breakdown by User (Shared Finance)
+    var userTotals = {};
+    var hasUserColumn = (expData.length > 0 && expData[0].length >= 6); // Check if column 6 exists
+    
+    if (hasUserColumn) {
+       for (var i = 1; i < expData.length; i++) {
+          var date = new Date(expData[i][1]);
+          if (date.getMonth() + 1 === m && date.getFullYear() === y) {
+             var amt = Number(expData[i][2]) || 0;
+             var who = expData[i][5] || "Unknown"; // Column F (index 5)
+             userTotals[who] = (userTotals[who] || 0) + amt;
+          }
+       }
+       
+       if (Object.keys(userTotals).length > 1) { // Only show if more than 1 user or explicitly tracked
+          msg += "\n👥 **Chi tiêu theo thành viên:**\n";
+          for (var u in userTotals) {
+             msg += "• " + u + ": " + formatMoney(userTotals[u]) + "\n";
+          }
+       }
+    }
     
     if (Object.keys(catTotals).length === 0) {
       msg += t('no_data', telegramId);
@@ -457,7 +479,8 @@ function handleSaveExpense(cid, sheetId, cb, telegramId) {
   var cat = d[0], amt = Number(d[1]), note = d[2];
   
   var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
-  sheet.appendRow([sheet.getLastRow(), new Date(), amt, cat, note]);
+  var sender = getSenderName(telegramId);
+  sheet.appendRow([sheet.getLastRow(), new Date(), amt, cat, note, sender]);
   
   editMessage(cid, cb.message.message_id, t('saved', telegramId) + " " + formatMoney(amt) + "\n📂 " + cat + " | 📝 " + note);
   
@@ -480,7 +503,8 @@ function handleSaveIncome(cid, sheetId, cb, telegramId) {
   var cat = d[1], amt = Number(d[2]), note = d[3];
   
   var sheet = getOrCreateSheetForUser(sheetId, 'Income');
-  sheet.appendRow([sheet.getLastRow(), new Date(), amt, cat, note]);
+  var sender = getSenderName(telegramId);
+  sheet.appendRow([sheet.getLastRow(), new Date(), amt, cat, note, sender]);
   
   editMessage(cid, cb.message.message_id, t('saved_in', telegramId) + " " + formatMoney(amt) + "\n📂 " + cat + " | 📝 " + note);
 }
@@ -1656,7 +1680,11 @@ function addExpenseDirect(cid, sheetId, amount, category, note, telegramId) {
       // Let's default to AI's suggestion, effectively auto-adding it to history/list but maybe not to "Configured Categories" list unless requested.
       // Actually, just saving string is fine.
       
-      sheet.appendRow([new Date(), new Date(), amount, category, note]);
+      
+      // Get Sender Name
+      var sender = getSenderName(telegramId);
+      
+      sheet.appendRow([new Date(), new Date(), amount, category, note, sender]);
       checkBudgetAlert(cid, sheetId, amount, category, telegramId);
    } catch (e) {
       Logger.log("Add Expense Direct Error: " + e);
@@ -1667,7 +1695,8 @@ function addIncome(cid, sheetId, amount, note, telegramId) {
    // Logic for Income
    try {
       var sheet = getOrCreateSheetForUser(sheetId, 'Income');
-      sheet.appendRow([new Date(), new Date(), amount, "Khác", note]); // Default cat Khác for now
+      var sender = getSenderName(telegramId);
+      sheet.appendRow([new Date(), new Date(), amount, "Khác", note, sender]); // Default cat Khác for now
    } catch (e) {
       Logger.log("Add Income Error: " + e);
    }

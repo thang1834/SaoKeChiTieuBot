@@ -139,7 +139,12 @@ var TEXT = {
           "- Xóa hạng mục chi: `/category del [Tên]`\n" +
           "- Thêm hạng mục thu: `/category in add [Tên]`\n\n" +
           
-          "**5️⃣ NGÂN SÁCH (Budget)**\n" +
+          "**5️⃣ QUẢN LÝ ĐA NGƯỜI DÙNG (Shared)**\n" +
+          "- Mời người khác vào dùng chung: Share quyền Editor Sheet cho họ.\n" +
+          "- Họ chỉ cần chat bot: `/connect [SheetID]`\n" +
+          "- Bot sẽ tự ghi nhận ai là người chi tiêu.\n\n" +
+
+          "**6️⃣ NGÂN SÁCH (Budget)**\n" +
           "- Đặt tổng: `/budget 5m`\n" +
           "- Đặt riêng hạng mục: `/budget 2m Ăn uống`\n" +
           "⚠️ Bot sẽ cảnh báo khi bạn chi tiêu vượt mức!\n\n" +
