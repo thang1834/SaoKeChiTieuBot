@@ -187,9 +187,6 @@
 
 ## 🗺 Roadmap
 
-- [x] **AI Integration**: Smarter parsing.
-- [x] **Voice Input**: Speech-to-text for transactions.
-- [x] **Shared Finance**: Multi-user support.
 - [ ] **Mobile App**: Pending...
 
 ---
