@@ -74,10 +74,9 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 
 ### 🔄 Chi Tiêu Định Kỳ
 ```
-/recurring                → Xem danh sách
+/recurring                → Xem danh sách (Bấm nút 🗑 để xóa)
 /recurring add 2m tiền nhà monthly 1
                           → Thêm (monthly/weekly, ngày)
-/recurring del 1          → Xóa theo ID
 ```
 
 ### 🍰 Chia Tiền
@@ -92,11 +91,10 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 # Tạo mục tiêu
 /goal add 50m Xe 12/2026  → Mục tiêu 50 triệu mua xe
 
-# Xem danh sách
-/goal list                → Xem tiến độ %
-
 # Nạp tiền
-/goal deposit [ID] 2m     → Nạp 2 triệu vào mục tiêu [ID]
+1. Gõ `/goal list`
+2. Bấm nút [💰 Nạp tiền] bên cạnh mục tiêu.
+3. Nhập số tiền (VD: 2m) -> Bot tự nạp.
 ```
 
 ### 📒 Sổ Nợ (Debt Tracking)
@@ -105,9 +103,9 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /debt borrow 500k Lan       → Mình vay Lan 500k
 /debt lend 1m Tuấn          → Mình cho Tuấn vay 1m
 
-# Quản lý
-/debt list                  → Xem danh sách nợ (Active)
-/debt repay [ID] [số tiền]  → Trả nợ (hoặc gạch nợ đã thu)
+# Trả nợ
+1. Gõ `/debt list`
+2. Bấm nút [💸 Trả hết] để gạch nợ nhanh.
 ```
 
 ### ⏰ Nhắc Nhở
@@ -118,9 +116,9 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 
 ### ⚙️ Cài Đặt
 ```
-/lang                     → Đổi ngôn ngữ (VI/EN)
+/settings                 → Menu cài đặt (Ngôn ngữ / Nhắc nhở)
+/help                     → Xem hướng dẫn (Menu tương tác)
 /donate                   → Ủng hộ tác giả
-/help                     → Xem hướng dẫn
 ```
 
 ### 🎙 Voice Input

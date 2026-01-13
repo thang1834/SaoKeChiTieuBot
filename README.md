@@ -51,9 +51,9 @@
 ### 💸 Chi Tiêu
 | Lệnh | Mô tả |
 |------|-------|
-| `50k cafe` | Nhập chi tiêu (Bot hỏi chọn hạng mục) |
+| `50k cafe` | Nhập chi tiêu |
 | `/undo` | Xóa giao dịch cuối cùng |
-| `/delete [ID]` | Xóa giao dịch theo ID |
+| `/delete [ID]` | Xóa giao dịch theo ID (hoặc dùng nút Xóa trong list) |
 | `/search [từ khóa]` | Tìm kiếm giao dịch |
 
 ### 💰 Thu Nhập
@@ -96,9 +96,8 @@
 ### 🔄 Chi Tiêu Định Kỳ
 | Lệnh | Mô tả |
 |------|-------|
-| `/recurring` | Xem danh sách chi định kỳ |
+| `/recurring` | Xem danh sách (Có nút **Xóa** tương tác) |
 | `/recurring add 2m tiền nhà monthly 1` | Thêm (monthly/weekly, ngày) |
-| `/recurring del [ID]` | Xóa chi tiêu định kỳ |
 
 ### 🍰 Chia Tiền
 | Lệnh | Mô tả |
@@ -108,17 +107,17 @@
 ### 🏆 Mục Tiêu Tiết Kiệm
 | Lệnh | Mô tả |
 |------|-------|
-| `/goal list` | Xem danh sách mục tiêu |
+| `/goal list` | Xem danh sách (Có nút **💰 Nạp tiền**) |
 | `/goal add 50m Xe 12/2025` | Tạo mục tiêu mới |
-| `/goal deposit [ID] [số] | Nạp tiền vào mục tiêu |
+| `/goal deposit [ID] [số] | Nạp tiền (hoặc bấm nút trong list) |
 
 ### 📒 Sổ Nợ (Debt Tracking)
 | Lệnh | Mô tả |
 |------|-------|
 | `/debt borrow [số] [ai] [ghi chú]` | Ghi nhận mình đi vay |
 | `/debt lend [số] [ai] [ghi chú]` | Ghi nhận mình cho vay |
-| `/debt list` | Xem danh sách nợ đang Active |
-| `/debt repay [ID] [số]` | Trả nợ / Gạch nợ (đã nhận) |
+| `/debt list` | Xem sổ nợ (Có nút **💸 Trả hết**) |
+| `/debt repay [ID] [số]` | Trả nợ thủ công |
 
 ### 📤 Export & Backup
 | Lệnh | Mô tả |
@@ -133,12 +132,12 @@
 | `/remind 21:00` | Đặt nhắc nhở hàng ngày |
 | `/stopremind` | Tắt nhắc nhở |
 
-### ⚙️ Cài Đặt
+### ⚙️ Cài Đặt (Settings)
 | Lệnh | Mô tả |
 |------|-------|
-| `/lang` | Đổi ngôn ngữ (VI/EN) |
-| `/lang` | Đổi ngôn ngữ (VI/EN) |
-| `/donate` | Ủng hộ tác giả (QR VietQR) |
+| `/settings` | Menu cài đặt tập trung (Mới) |
+| `/help` | Menu hướng dẫn tương tác |
+| `/donate` | Ủng hộ tác giả |
 
 ### 👥 Shared Finance (Mới)
 - Quản lý chi tiêu nhóm/gia đình.
