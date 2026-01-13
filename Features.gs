@@ -1940,7 +1940,8 @@ function handleVoiceMessage(cid, sheetId, fileId, telegramId) {
                var note = t.note || "Voice Note";
                var sender = getSenderName(telegramId);
                
-               sheet.appendRow([new Date(), new Date(), t.amount, cat, note, sender]);
+               var stt = sheet.getLastRow();
+               sheet.appendRow([stt, new Date(), t.amount, cat, note, sender]);
                total += Number(t.amount);
                count++;
            }
