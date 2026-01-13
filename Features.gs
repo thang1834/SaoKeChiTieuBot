@@ -1055,23 +1055,39 @@ function listRecurring(cid, sheetId, telegramId) {
     
     var data = sheet.getDataRange().getValues();
     var msg = "🔄 **CHI TIÊU ĐỊNH KỲ**\n\n";
+    var kb = [];
     
     for (var i = 1; i < data.length; i++) {
       if (data[i][6] !== false) { // Active
-        msg += "#" + data[i][0] + " | " + formatMoney(data[i][1]) + " | " + data[i][3] + 
+        var id = data[i][0];
+        msg += "#" + id + " | " + formatMoney(data[i][1]) + " | " + data[i][3] + 
                " | " + data[i][4] + " (ngày " + data[i][5] + ")\n";
+               
+        // Add delete button for each item
+        kb.push([{text: "🗑 Xóa #" + id, callback_data: "rec_del|" + id}]);
       }
     }
     
-    msg += "\n📝 `/recurring add [số] [ghi chú]` - Thêm";
-    msg += "\n🗑 `/recurring del [ID]` - Xóa";
+    msg += "\n👇 Bấm nút bên dưới để xóa nhanh hoặc thêm mới bằng lệnh.";
     
-    sendText(cid, msg);
+    // Add Add Hint Button (doesn't do anything, just label) or a Help button
+    sendMessageKb(cid, msg, {inline_keyboard: kb});
     
   } catch (e) {
     Logger.log("List recurring error: " + e);
     sendText(cid, "❌ Lỗi: " + e.message);
   }
+}
+
+function handleRecurringCallback(cid, data, sheetId, telegramId) {
+    // data format: rec_del|ID
+    var parts = data.split("|");
+    var action = parts[0];
+    var id = parts[1];
+    
+    if (action === "rec_del") {
+       removeRecurring(cid, sheetId, id, telegramId);
+    }
 }
 
 function handleRecurringCommand(cid, sheetId, args, telegramId) {

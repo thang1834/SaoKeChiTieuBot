@@ -387,6 +387,10 @@ function handleCallbackQuery(cb) {
   // help|topic - Hiển thị nội dung hướng dẫn
   else if (data.startsWith("help|")) {
     handleHelpCallback(senderId, msgId, data.split("|")[1], senderId);
+  }
+  // rec_del|ID - Xóa định kỳ
+  else if (data.startsWith("rec_del|")) {
+    handleRecurringCallback(senderId, data, userSheetId, senderId);
   } 
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
