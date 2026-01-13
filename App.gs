@@ -168,6 +168,45 @@ function processDonations(txns) {
             txnDate = new Date(parts[2], parts[1] - 1, parts[0]);
         }
         
+        // --- NEW: Parse Time & Clean Description from VCB 24/7 Prefix ---
+        // Example: 0200970422011305284920265LUL786866.84733.052850.Toi tu donate minh
+        // Regex to find Time (HHmmss) near Year (YYYY)
+        // Look for: MMDD(HHmmss)YYYY
+        // 0113(052849)2026
+        var timeMatch = desc.match(/\d{4}(\d{6})\d{4}/); 
+        if (timeMatch) {
+            var fullTime = timeMatch[1]; // 052849
+            var hh = parseInt(fullTime.substring(0, 2));
+            var mm = parseInt(fullTime.substring(2, 4));
+            var ss = parseInt(fullTime.substring(4, 6));
+            txnDate.setHours(hh, mm, ss);
+        }
+        
+        // Clean Description: Remove technical prefix
+        // Strategy: Split by dot. Remove parts that are purely digits or very long alphanumeric.
+        // Or if we found the technical pattern, strip it.
+        var cleanDesc = desc;
+        if (desc.length > 30 && /^\d+/.test(desc)) { // Starts with digits and is long
+            var parts = desc.split('.');
+            var startIndex = 0;
+            for(var k=0; k<parts.length; k++) {
+                var p = parts[k];
+                // If part is all digits OR part is very long (>15 chars) no spaces
+                if (/^\d+$/.test(p) || (p.length > 15 && !p.includes(' '))) {
+                   startIndex++;
+                } else {
+                   break; // Found content
+                }
+            }
+            if (startIndex > 0 && startIndex < parts.length) {
+                cleanDesc = parts.slice(startIndex).join('.').trim();
+            }
+        }
+        
+        // Use cleaned description for further processing
+        desc = cleanDesc;
+        // ----------------------------------------------------------------
+        
         // Check if Income (Credit)
         // CD="+" implies Credit (Incoming money)
         if (cd === '+' || cd === 'C' || (cd === undefined && amt > 0)) {
