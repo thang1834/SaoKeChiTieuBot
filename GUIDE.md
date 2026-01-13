@@ -127,7 +127,14 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 1. Nhấn nút 🎙 (Microphone) trên Telegram.
 2. Nói chi tiêu: "Sáng nay ăn phở 40 nghìn, uống cafe 25 nghìn".
 3. Thả tay để gửi.
+3. Thả tay để gửi.
 4. Bot sẽ tự phân tích và lưu vào Sheet.
+
+### 👥 Shared Finance (Dùng chung)
+1. Share quyền **Editor** file Google Sheet cho người bạn muốn mời.
+2. Người đó vào chat với Bot: `/connect [Dán_Sheet_ID]`.
+3. Xong! Cả 2 cùng nhập liệu vào 1 file.
+4. Khi `/report`, bot sẽ chia danh sách: "Ai tiêu bao nhiêu?".
 
 ---
 

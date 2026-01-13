@@ -140,6 +140,11 @@
 | `/lang` | Đổi ngôn ngữ (VI/EN) |
 | `/donate` | Ủng hộ tác giả (QR VietQR) |
 
+### 👥 Shared Finance (Mới)
+- Quản lý chi tiêu nhóm/gia đình.
+- Share quyền **Editor** Sheet cho người khác -> Họ chat `/connect [SheetID]`.
+- Bot tự động ghi nhận người chi tiêu và báo cáo riêng.
+
 ### 🤖 AI Integration (Mới)
 - Bot tự động hiểu ngôn ngữ tự nhiên nếu bạn không nhập đúng cú pháp chuẩn.
 - VD: "Vừa ăn phở 50k với uống cafe 30k" -> AI tự tách thành 2 giao dịch.
@@ -182,8 +187,10 @@
 
 ## 🗺 Roadmap
 
-- [ ] **AI Integration** (Google Gemini/OpenAI): Smarter parsing.
-- [ ] **Voice Input**: Speech-to-text for transactions.
+- [x] **AI Integration**: Smarter parsing.
+- [x] **Voice Input**: Speech-to-text for transactions.
+- [x] **Shared Finance**: Multi-user support.
+- [ ] **Mobile App**: Pending...
 
 ---
 
