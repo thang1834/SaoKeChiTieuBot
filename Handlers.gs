@@ -76,8 +76,9 @@ function handleMessage(text, senderId, senderName) {
   // =========================================================================
   
   // /start, /help, /hdsd - Xem hướng dẫn
+  // /start, /help, /hdsd - Xem hướng dẫn
   if (text === "/start" || text === "/help" || text === "/hdsd") { 
-    sendText(senderId, t('help', senderId)); 
+    sendHelpMenu(senderId, senderId); 
     return; 
   }
   
@@ -382,6 +383,10 @@ function handleCallbackQuery(cb) {
   else if (data.startsWith("pagein|")) {
     var pin = data.split("|");
     listIncome(senderId, userSheetId, parseInt(pin[1]), msgId, pin[2], pin[3], senderId);
+  }
+  // help|topic - Hiển thị nội dung hướng dẫn
+  else if (data.startsWith("help|")) {
+    handleHelpCallback(senderId, msgId, data.split("|")[1], senderId);
   } 
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
@@ -596,4 +601,60 @@ function setupMonthlyReportTrigger() {
     .create();
     
   Logger.log("Monthly report trigger created");
+}
+// --- HELP MENU HANDLERS ---
+function sendHelpMenu(cid, telegramId) {
+  var kb = [
+    [{text: "📌 Kết Nối", callback_data: "help|connect"}, {text: "💸 Chi Tiêu", callback_data: "help|expense"}],
+    [{text: "💰 Thu Nhập", callback_data: "help|income"}, {text: "🎯 Ngân Sách", callback_data: "help|budget"}],
+    [{text: "👥 Shared", callback_data: "help|shared"}, {text: "⚙️ Tính Năng Khác", callback_data: "help|advanced"}],
+    [{text: "📂 Hạng Mục", callback_data: "help|category"}, {text: "🎙 Voice/AI", callback_data: "help|ai"}]
+  ];
+  sendMessageKb(cid, "🌟 **HƯỚNG DẪN SỬ DỤNG** 🌟\nChọn chủ đề bạn muốn xem:", {inline_keyboard: kb});
+}
+
+function handleHelpCallback(cid, msgId, topic, telegramId) {
+   var txt = "";
+   var backKb = {inline_keyboard: [[{text: "🔙 Quay lại Menu", callback_data: "help|main"}]]};
+   
+   switch(topic) {
+     case "main":
+       var kb = [
+         [{text: "📌 Kết Nối", callback_data: "help|connect"}, {text: "💸 Chi Tiêu", callback_data: "help|expense"}],
+         [{text: "💰 Thu Nhập", callback_data: "help|income"}, {text: "🎯 Ngân Sách", callback_data: "help|budget"}],
+         [{text: "👥 Shared", callback_data: "help|shared"}, {text: "⚙️ Tính Năng Khác", callback_data: "help|advanced"}],
+         [{text: "📂 Hạng Mục", callback_data: "help|category"}, {text: "🎙 Voice/AI", callback_data: "help|ai"}]
+       ];
+       editMessageKb(cid, msgId, "🌟 **HƯỚNG DẪN SỬ DỤNG** 🌟\nChọn chủ đề bạn muốn xem:", {inline_keyboard: kb});
+       return;
+       
+     case "connect":
+       txt = t('help_connect', telegramId);
+       break;
+     case "expense":
+       txt = t('help_expense', telegramId);
+       break;
+     case "income":
+        txt = t('help_income', telegramId);
+        break;
+     case "budget":
+        txt = t('help_budget', telegramId);
+        break;
+     case "shared":
+        txt = t('help_shared', telegramId);
+        break;
+     case "advanced":
+        txt = t('help_advanced', telegramId);
+        break;
+     case "category":
+        txt = t('help_category', telegramId);
+        break;
+     case "ai":
+        txt = t('help_ai', telegramId);
+        break;
+     default:
+        txt = "❌ Chủ đề không tồn tại.";
+   }
+   
+   editMessageKb(cid, msgId, txt, backKb);
 }

@@ -118,47 +118,48 @@ var TEXT = {
     donate_msg: "🙏 **Cảm ơn bạn đã ủng hộ!**\nQuét mã QR bên dưới để chuyển khoản:",
     
     // Hướng dẫn sử dụng
-    help: "🌟 **HƯỚNG DẪN SỬ DỤNG CHI TIẾT** 🌟\n\n" +
-          "**1️⃣ KẾT NỐI DATABASE**\n" +
-          "- B1: Tạo Google Sheet mới.\n" +
-          "- B2: Share quyền *Editor* cho `ducthang01052002@gmail.com`\n" +
-          "- B3: Copy Sheet ID (dãy ký tự giữa `/d/` và `/edit` trên URL).\n" +
-          "- B4: Gõ `/connect [SheetID]`\n\n" +
-          
-          "**2️⃣ GHI CHÉP CHI TIÊU** (Hàng ngày)\n" +
-          "- Gõ nhanh: `50k cafe`, `200k tiền điện`\n" +
-          "- Xóa nếu sai: `/undo` (mục cuối) hoặc `/delete [ID]`\n" +
-          "- Xem lại: `/list` (tháng này) hoặc `/search cafe`\n\n" +
-          
-          "**3️⃣ GHI THU NHẬP**\n" +
-          "- Gõ: `/in 10m lương tháng 1`\n" +
-          "- Xem: `/listin`\n\n" +
-          
-          "**4️⃣ QUẢN LÝ HẠNG MỤC**\n" +
-          "- Thêm hạng mục chi: `/category add [Tên]`\n" +
-          "- Xóa hạng mục chi: `/category del [Tên]`\n" +
-          "- Thêm hạng mục thu: `/category in add [Tên]`\n\n" +
-          
-          "**5️⃣ QUẢN LÝ ĐA NGƯỜI DÙNG (Shared)**\n" +
-          "- Mời người khác vào dùng chung: Share quyền Editor Sheet cho họ.\n" +
-          "- Họ chỉ cần chat bot: `/connect [SheetID]`\n" +
-          "- Bot sẽ tự ghi nhận ai là người chi tiêu.\n\n" +
-
-          "**6️⃣ NGÂN SÁCH (Budget)**\n" +
-          "- Đặt tổng: `/budget 5m`\n" +
-          "- Đặt riêng hạng mục: `/budget 2m Ăn uống`\n" +
-          "⚠️ Bot sẽ cảnh báo khi bạn chi tiêu vượt mức!\n\n" +
-          
-          "**7️⃣ TÍNH NĂNG KHÁC**\n" +
-          "- 🍰 **Chia tiền**: `/split 500k 4 ăn tối` (chia 500k cho 4 người)\n" +
-          "- 🏆 **Mục tiêu**: `/goal add 50m Mua xe 12/2025`\n" +
-          "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
-          "- 📒 **Sổ nợ**: `/debt borrow 500k Name` | `/debt lend 1m Name` | `/debt list` | `/debt repay ID`\n" +
-          "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
-          "- 📊 **Báo cáo**: `/report` (Auto)\n" +
-          "- 📤 **Backup/Export**: `/backup` | `/export pdf` | `/export csv`\n\n" +
-          "🎙 **Voice Input**: Gửi Voice Note để nhập chi tiêu!\n" +
-          "🌐 `/lang` (Đổi ngôn ngữ) | ❤️ `/donate`"
+    // Help Menu (Split)
+    help_connect: "**1️⃣ KẾT NỐI DATABASE**\n" +
+                  "- B1: Tạo Google Sheet mới.\n" +
+                  "- B2: Share quyền *Editor* cho `" + CONFIG.BOT_EMAIL + "`\n" +
+                  "- B3: Gõ `/connect [SheetID]`",
+    
+    help_expense: "**2️⃣ GHI CHÉP CHI TIÊU**\n" +
+                  "- Gõ: `50k cafe`, `200k tiền điện`\n" +
+                  "- Xóa: `/undo` (mục cuối) hoặc `/delete [ID]`\n" +
+                  "- Xem: `/list` (tháng này) hoặc `/search cafe`",
+                  
+    help_income: "**3️⃣ GHI THU NHẬP**\n" +
+                 "- Gõ: `/in 10m lương tháng 1`\n" +
+                 "- Xem: `/listin`",
+                 
+    help_budget: "**6️⃣ NGÂN SÁCH (Budget)**\n" +
+                 "- Đặt tổng: `/budget 5m`\n" +
+                 "- Đặt riêng hạng mục: `/budget 2m Ăn uống`\n" +
+                 "⚠️ Bot sẽ cảnh báo khi bạn chi tiêu vượt mức!",
+                 
+    help_category: "**4️⃣ QUẢN LÝ HẠNG MỤC**\n" +
+                   "- Thêm chi: `/category add [Tên]`\n" +
+                   "- Xóa chi: `/category del [Tên]`\n" +
+                   "- Thêm thu: `/category in add [Tên]`",
+                   
+    help_shared: "**5️⃣ SHARED FINANCE**\n" +
+                 "- Mời người khác vào dùng chung: Share quyền Editor Sheet cho họ.\n" +
+                 "- Họ chat: `/connect [SheetID]`\n" +
+                 "- Bot tự ghi nhận ai chi tiêu.",
+                 
+    help_advanced: "**7️⃣ TÍNH NĂNG KHÁC**\n" +
+                   "- 🍰 **Chia tiền**: `/split 500k 4 ăn tối`\n" +
+                   "- 🏆 **Mục tiêu**: `/goal add 50m Xe 12/2026`\n" +
+                   "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
+                   "- 📒 **Sổ nợ**: `/debt borrow 500k Name`\n" +
+                   "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
+                   "- 📊 **Báo cáo**: `/report` (Auto)\n" +
+                   "- 📤 **Backup/Export**: `/backup` | `/export`",
+                   
+    help_ai: "**🎙 Voice & AI**\n" +
+             "- Gửi Voice Note: 'An sang 50k'\n" +
+             "- Bot dùng AI (Gemini Flash) để phân tích."
   },
   
   // --- ENGLISH ---
@@ -190,18 +191,49 @@ var TEXT = {
     choose_lang: "🌐 Choose language / Chọn ngôn ngữ:",
     lang_set: "🇬🇧 Language switched to English.",
     donate_msg: "🙏 **Thank you for your support!**\nScan the QR code below to donate:",
-    help: "🌟 **USER GUIDE** 🌟\n\n" +
-          "📌 **CONNECTION**\n`/connect [SheetID]`\n\n" +
-          "💸 **EXPENSES**\n`50k coffee` - Log\n`/list` `/undo` `/delete [ID]` `/search`\n\n" +
-          "💰 **INCOME**\n`/in 10m salary` - Log\n`/listin` `/undoin` `/deletein` `/searchin`\n\n" +
-          "📊 **REPORTS**\n`/report` `/filter` `/export`\n\n" +
-          "🎯 **BUDGET**\n`/budget [amount] [category]`\n\n" +
-          "📂 **CATEGORIES**\n`/category` - View\n`/category add/del [name]` - Expense\n`/category in add/del [name]` - Income\n\n" +
-          "🔄 **RECURRING**\n`/recurring` - View\n`/recurring add 2m rent monthly 1`\n\n" +
-          "🍰 **SPLIT BILL**\n`/split 500k 4 dinner`\n\n" +
-          "🏆 **GOALS**\n`/goal list`\n`/goal add 100m Car 12/2025`\n`/goal deposit ID 2m`\n\n" +
-          "📒 **DEBT**\n`/debt borrow/lend [amount] [name]`\n`/debt list` `/debt repay [ID]`\n\n" +
-          "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
+    // Help Menu (Split - EN)
+    help_connect: "**1️⃣ CONNECT DATABASE**\n" +
+                  "- 1. Create Google Sheet.\n" +
+                  "- 2. Share *Editor* to `" + CONFIG.BOT_EMAIL + "`\n" +
+                  "- 3. Type `/connect [SheetID]`",
+    
+    help_expense: "**2️⃣ EXPENSES**\n" +
+                  "- Type: `50k coffee`\n" +
+                  "- Del: `/undo` (last) or `/delete [ID]`\n" +
+                  "- View: `/list` or `/search coffee`",
+                  
+    help_income: "**3️⃣ INCOME**\n" +
+                 "- Type: `/in 10m salary`\n" +
+                 "- View: `/listin`",
+                 
+    help_budget: "**6️⃣ BUDGET**\n" +
+                 "- Set Total: `/budget 5m`\n" +
+                 "- Set Category: `/budget 2m Food`\n" +
+                 "⚠️ Bot alerts when over budget!",
+                 
+    help_category: "**4️⃣ CATEGORIES**\n" +
+                   "- Add Exp: `/category add [Name]`\n" +
+                   "- Del Exp: `/category del [Name]`\n" +
+                   "- Add Inc: `/category in add [Name]`",
+                   
+    help_shared: "**5️⃣ SHARED FINANCE**\n" +
+                 "- Share Sheet *Editor* to others.\n" +
+                 "- They type: `/connect [SheetID]`\n" +
+                 "- Bot tracks who spent what.",
+                 
+    help_advanced: "**7️⃣ ADVANCED**\n" +
+                   "- 🍰 **Split**: `/split 500k 4 dinner`\n" +
+                   "- 🏆 **Goal**: `/goal add 50m Car 12/2026`\n" +
+                   "- 🔄 **Recurring**: `/recurring add 2m Rent monthly 1`\n" +
+                   "- 📒 **Debt**: `/debt borrow 500k Name`\n" +
+                   "- ⏰ **Remind**: `/remind 21:00`\n" +
+                   "- 📊 **Report**: `/report` (Auto)\n" +
+                   "- 📤 **Backup**: `/backup` | `/export`",
+                   
+    help_ai: "**🎙 Voice & AI**\n" +
+             "- Send Voice Note: 'Breakfast 50k'\n" +
+             "- AI (Gemini Flash) will parse it."
+  }
   }
 };
 
