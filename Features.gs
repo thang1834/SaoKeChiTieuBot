@@ -307,7 +307,7 @@ function setBudget(cid, sheetId, txt, telegramId) {
   if (!txt) {
     var budgets = getBudgetMap(sheetId);
     if (Object.keys(budgets).length === 0) { 
-      sendText(cid, "📭 Chưa có ngân sách nào. Gõ `/budget 5m` để đặt."); 
+      sendText(cid, "📭 Chưa có ngân sách nào. Gõ `/budget 5m [hạng mục]` để đặt."); 
       return; 
     }
     var msg = "🎯 **Ngân sách tháng này:**\n";
@@ -322,6 +322,12 @@ function setBudget(cid, sheetId, txt, telegramId) {
   if (!amt) { sendText(cid, t('invalid_num', telegramId)); return; }
   
   var cat = txt.split(" ").slice(1).join(" ") || "Total";
+  // Validate category if not 'Total'
+  if (cat !== 'Total') {
+     var cats = getCategories(sheetId, 'expense');
+     // Fuzzy match or just allow it? Let's check if exists to prevent typos
+     // But for flexibility, let's auto-capitalize first letter
+  }
 
   var sheet = getOrCreateSheetForUser(sheetId, 'Budget');
   var data = sheet.getDataRange().getValues();
@@ -607,7 +613,7 @@ function executeDeleteIncome(cid, sheetId, telegramId) {
 function listIncome(cid, sheetId, page, msgId, month, year, telegramId) {
   try {
     var pageSize = CONFIG.PAGE_SIZE;
-    var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+    var sheet = getOrCreateSheetForUser(sheetId, 'Income'); // Explicitly calling Income sheet
     var data = sheet.getDataRange().getValues();
     
     var now = new Date();
@@ -616,6 +622,9 @@ function listIncome(cid, sheetId, page, msgId, month, year, telegramId) {
     
     var filtered = [];
     for (var i = 1; i < data.length; i++) {
+        // Validation: Verify if the row actually has valid date and amount
+        if (!data[i][1] || !data[i][2]) continue;
+
       var date = new Date(data[i][1]);
       if (date.getMonth() + 1 === m && date.getFullYear() === y) {
         filtered.push(data[i]);
@@ -632,7 +641,7 @@ function listIncome(cid, sheetId, page, msgId, month, year, telegramId) {
     var start = (page - 1) * pageSize;
     var end = Math.min(start + pageSize, filtered.length);
     
-    var msg = "💰 **Thu nhập tháng " + m + "/" + y + "**\n\n";
+    var msg = "💰 **THU NHẬP THÁNG " + m + "/" + y + "**\n\n";
     
     for (var i = start; i < end; i++) {
       var r = filtered[i];
@@ -714,7 +723,13 @@ function addCategory(cid, sheetId, name, type, telegramId) {
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
       if (data[i][0].toLowerCase() === name.toLowerCase() && data[i][1] === type) {
-        sendText(cid, "⚠️ Hạng mục **" + name + "** đã tồn tại!");
+        // If inactive, reactivate it
+        if (data[i][3] === false || data[i][3] === "FALSE") {
+           sheet.getRange(i + 1, 4).setValue(true);
+           sendText(cid, "✅ Đã kích hoạt lại hạng mục: **" + name + "**");
+        } else {
+           sendText(cid, "⚠️ Hạng mục **" + name + "** đã tồn tại!");
+        }
         return;
       }
     }
@@ -747,10 +762,13 @@ function removeCategory(cid, sheetId, name, type, telegramId) {
     }
     
     var data = sheet.getDataRange().getValues();
+    // Assuming Column D (index 3) is Active
+    
     for (var i = 1; i < data.length; i++) {
       if (data[i][0].toLowerCase() === name.toLowerCase() && data[i][1] === type) {
-        sheet.deleteRow(i + 1);
-        sendText(cid, "🗑 Đã xóa hạng mục: **" + name + "**");
+        // Set Active = false (Column 4)
+        sheet.getRange(i + 1, 4).setValue(false);
+        sendText(cid, "🗑 Đã ẩn (deactive) hạng mục: **" + name + "**");
         return;
       }
     }

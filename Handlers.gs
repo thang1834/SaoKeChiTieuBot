@@ -241,10 +241,23 @@ function handleMessage(text, senderId, senderName) {
   }
   
   // =========================================================================
-  // MẶC ĐỊNH: PARSE EXPENSE
+  // MẶC ĐỊNH: PARSE EXPENSE HOẶC BÁO LỖI
   // =========================================================================
   
-  // Nếu không match lệnh nào, thử parse như chi tiêu
+  // Nếu là lệnh (bắt đầu bằng /) mà không match ở trên -> Lệnh sai
+  if (text.startsWith("/")) {
+     // Gợi ý lệnh đúng
+     var suggestion = "❌ **Lệnh không hợp lệ!**\n\n" +
+                      "Có thể bạn muốn dùng:\n" +
+                      "- `/help`: Xem hướng dẫn chi tiết\n" +
+                      "- `/list`: Xem danh sách chi tiêu\n" +
+                      "- `/report`: Xem báo cáo\n\n" +
+                      "Quét lại menu bằng cách gõ `/`";
+     sendText(senderId, suggestion);
+     return;
+  }
+  
+  // Nếu không phải lệnh, thử parse như chi tiêu
   // VD: "50k cafe", "200k tiền điện"
   handleExpenseMessage(senderId, userSheetId, text, senderId);
 }

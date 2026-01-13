@@ -76,17 +76,17 @@
 | Lệnh | Mô tả |
 |------|-------|
 | `/budget` | Xem ngân sách hiện tại |
-| `/budget 10m` | Đặt tổng ngân sách tháng |
-| `/budget 2m ăn uống` | Đặt ngân sách theo hạng mục |
+| `/budget 5m` | Đặt tổng ngân sách tháng |
+| `/budget 2m ăn uống` | Đặt ngân sách riêng cho hạng mục |
 
 ### 📂 Hạng Mục Tùy Chỉnh
 | Lệnh | Mô tả |
 |------|-------|
 | `/category` | Xem danh sách |
-| `/category add [tên]` | Thêm hạng mục chi tiêu |
-| `/category del [tên]` | Xóa hạng mục chi tiêu |
+| `/category add [tên]` | Thêm hạng mục (nếu đã xóa sẽ kích hoạt lại) |
+| `/category del [tên]` | Ẩn (deactive) hạng mục |
 | `/category in add [tên]` | Thêm hạng mục thu nhập |
-| `/category in del [tên]` | Xóa hạng mục thu nhập |
+| `/category in del [tên]` | Ẩn hạng mục thu nhập |
 
 ### 🔄 Chi Tiêu Định Kỳ
 | Lệnh | Mô tả |

@@ -118,17 +118,39 @@ var TEXT = {
     donate_msg: "🙏 **Cảm ơn bạn đã ủng hộ!**\nQuét mã QR bên dưới để chuyển khoản:",
     
     // Hướng dẫn sử dụng
-    help: "🌟 **HƯỚNG DẪN SỬ DỤNG** 🌟\n\n" +
-          "📌 **KẾT NỐI**\n`/connect [SheetID]`\n\n" +
-          "💸 **CHI TIÊU**\n`50k cafe` - Nhập chi tiêu\n`/list` `/undo` `/delete [ID]` `/search`\n\n" +
-          "💰 **THU NHẬP**\n`/in 10m lương` - Nhập\n`/listin` `/undoin` `/deletein` `/searchin`\n\n" +
-          "📊 **BÁO CÁO**\n`/report` `/filter` `/export`\n\n" +
-          "🎯 **NGÂN SÁCH**\n`/budget [số] [hạng mục]`\n\n" +
-          "📂 **HẠNG MỤC**\n`/category` - Xem\n`/category add/del [tên]` - Chi tiêu\n`/category in add/del [tên]` - Thu nhập\n\n" +
-          "🔄 **ĐỊNH KỲ**\n`/recurring` - Xem\n`/recurring add 2m nhà monthly 1`\n\n" +
-          "🍰 **CHIA TIỀN**\n`/split 500k 4 ăn tối`\n\n" +
-          "🏆 **MỤC TIÊU**\n`/goal list`\n`/goal add 100m Xe 12/2025`\n`/goal deposit ID 2m`\n\n" +
-          "⏰ `/remind 21:00` `/stopremind`\n🌐 `/lang` | ❤️ `/donate`"
+    help: "🌟 **HƯỚNG DẪN SỬ DỤNG CHI TIẾT** 🌟\n\n" +
+          "**1️⃣ KẾT NỐI DATABASE**\n" +
+          "- B1: Tạo Google Sheet mới.\n" +
+          "- B2: Share quyền *Editor* cho `ducthang01052002@gmail.com`\n" +
+          "- B3: Copy Sheet ID (dãy ký tự giữa `/d/` và `/edit` trên URL).\n" +
+          "- B4: Gõ `/connect [SheetID]`\n\n" +
+          
+          "**2️⃣ GHI CHÉP CHI TIÊU** (Hàng ngày)\n" +
+          "- Gõ nhanh: `50k cafe`, `200k tiền điện`\n" +
+          "- Xóa nếu sai: `/undo` (mục cuối) hoặc `/delete [ID]`\n" +
+          "- Xem lại: `/list` (tháng này) hoặc `/search cafe`\n\n" +
+          
+          "**3️⃣ GHI THU NHẬP**\n" +
+          "- Gõ: `/in 10m lương tháng 1`\n" +
+          "- Xem: `/listin`\n\n" +
+          
+          "**4️⃣ QUẢN LÝ HẠNG MỤC**\n" +
+          "- Thêm hạng mục chi: `/category add [Tên]`\n" +
+          "- Xóa hạng mục chi: `/category del [Tên]`\n" +
+          "- Thêm hạng mục thu: `/category in add [Tên]`\n\n" +
+          
+          "**5️⃣ NGÂN SÁCH (Budget)**\n" +
+          "- Đặt tổng: `/budget 5m`\n" +
+          "- Đặt riêng hạng mục: `/budget 2m Ăn uống`\n" +
+          "⚠️ Bot sẽ cảnh báo khi bạn chi tiêu vượt mức!\n\n" +
+          
+          "**6️⃣ TÍNH NĂNG KHÁC**\n" +
+          "- 🍰 **Chia tiền**: `/split 500k 4 ăn tối` (chia 500k cho 4 người)\n" +
+          "- 🏆 **Mục tiêu**: `/goal add 50m Mua xe 12/2025`\n" +
+          "- 🔄 **Định kỳ**: `/recurring add 2m Tiền nhà monthly 1`\n" +
+          "- ⏰ **Nhắc nhở**: `/remind 21:00`\n" +
+          "- 📊 **Báo cáo**: `/report`\n\n" +
+          "🌐 `/lang` (Đổi ngôn ngữ) | ❤️ `/donate`"
   },
   
   // --- ENGLISH ---

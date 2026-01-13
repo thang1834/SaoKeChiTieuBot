@@ -53,7 +53,7 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ```
 /budget                   → Xem ngân sách hiện tại
 /budget 5m                → Đặt tổng ngân sách
-/budget 2m ăn uống        → Đặt theo hạng mục
+/budget 2m ăn uống        → Đặt riêng cho hạng mục "Ăn uống"
 ```
 
 ### 📂 Hạng Mục Tùy Chỉnh
@@ -61,12 +61,12 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /category                 → Xem danh sách
 
 # Chi tiêu (mặc định)
-/category add Cà phê      → Thêm
-/category del Cà phê      → Xóa
+/category add Cà phê      → Thêm (hoặc kích hoạt lại nếu đã xóa)
+/category del Cà phê      → Ẩn (tạm thời ngưng sử dụng)
 
 # Thu nhập
 /category in add Thưởng   → Thêm
-/category in del Thưởng   → Xóa
+/category in del Thưởng   → Ẩn
 ```
 
 ### 🔄 Chi Tiêu Định Kỳ
