@@ -417,3 +417,27 @@ function safeExecute(fn, cid) {
     return null;
   }
 }
+
+/**
+ * Gửi báo cáo lỗi chi tiết về cho Admin
+ * @param {Error} e - Exception object
+ * @param {string} context - Ngữ cảnh xảy ra lỗi (VD: "doPost", "saveExpense")
+ */
+function logErrorToAdmin(e, context) {
+  var adminId = CONFIG.ADMIN_CHAT_ID;
+  if (!adminId) return;
+  
+  var msg = "🚨 **SYSTEM ERROR** 🚨\n" +
+            "📍 Context: `" + context + "`\n" +
+            "❌ Message: `" + e.message + "`\n" +
+            "📜 Stack: ```\n" + e.stack + "\n```";
+            
+  try {
+    UrlFetchApp.fetch("https://api.telegram.org/bot" + CONFIG.BOT_TOKEN + "/sendMessage", { 
+      method: "post", 
+      payload: { chat_id: String(adminId), text: msg, parse_mode: "Markdown" } 
+    });
+  } catch (err) {
+    Logger.log("Failed to send error log to admin: " + err);
+  }
+}

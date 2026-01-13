@@ -123,6 +123,40 @@ function sendReport(cid, sheetId, arg, telegramId) {
   } catch (e) {
     Logger.log("Report Error: " + e);
     sendText(cid, "❌ Lỗi tạo báo cáo: " + e.message);
+    logErrorToAdmin(e, "sendReport");
+  }
+}
+
+function sendMonthlyReportAuto() {
+  var masterId = CONFIG.MASTER_SHEET_ID;
+  if (!masterId) return;
+  
+  try {
+    var ss = SpreadsheetApp.openById(masterId);
+    var sheet = ss.getSheetByName('Users');
+    var data = sheet.getDataRange().getValues();
+    
+    // Calculate last month
+    var now = new Date();
+    var lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    var m = lastMonthDate.getMonth() + 1;
+    var y = lastMonthDate.getFullYear();
+    var dateStr = m + "/" + y;
+    
+    for (var i = 1; i < data.length; i++) {
+       var telegramId = data[i][0];
+       var sheetId = data[i][1];
+       if (telegramId && sheetId) {
+          try {
+             sendReport(telegramId, sheetId, dateStr, telegramId);
+             sendText(telegramId, "📅 **Báo cáo tự động đầu tháng** (" + dateStr + ")");
+          } catch (err) {
+             Logger.log("Auto Report Failed for " + telegramId + ": " + err);
+          }
+       }
+    }
+  } catch (e) {
+    logErrorToAdmin(e, "sendMonthlyReportAuto");
   }
 }
 

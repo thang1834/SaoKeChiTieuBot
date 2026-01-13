@@ -45,6 +45,7 @@ function doPost(e) {
     }
   } catch (err) { 
     Logger.log("doPost Error: " + err); 
+    logErrorToAdmin(err, "doPost");
   }
 }
 
@@ -548,4 +549,26 @@ function setupHourlyReminderTrigger() {
     .create();
   
   Logger.log("Hourly reminder trigger created");
+}
+
+/**
+ * Tạo trigger gửi báo cáo tự động vào 9h sáng ngày 1 hàng tháng
+ */
+function setupMonthlyReportTrigger() {
+  // Clear old
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'sendMonthlyReportAuto') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  // Create new (Monthly on day 1 at 9am)
+  ScriptApp.newTrigger('sendMonthlyReportAuto')
+    .timeBased()
+    .onMonthDay(1)
+    .atHour(9)
+    .create();
+    
+  Logger.log("Monthly report trigger created");
 }
