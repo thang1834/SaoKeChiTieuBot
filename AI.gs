@@ -99,9 +99,11 @@ function processVoiceWithGemini(fileId) {
       "Listen to this audio (Vietnamese). It describes expenses. Extract them into JSON array: " +
       "[{ \"amount\": number, \"category\": string, \"note\": string, \"type\": \"OUT\"|\"IN\" }]. " +
       "Rules: " +
-      "- Guess category from context (Food, Travel, etc). " +
-      "- Convert spoken numbers (50 nghìn -> 50000, 1 củ -> 1000000). " +
-      "- Return ONLY JSON. No markdown formatting.";
+      "1. Convert k/củ to numbers (50k=50000, 1 củ=1000000). " +
+      "2. Default type is OUT. Use IN only for salary/incoming money. " +
+      "3. Map category STRICTLY to one of: [\"Ăn uống\", \"Học tập\", \"Nhà cửa\", \"Y tế\", \"Giải trí\", \"Cho vay\", \"Khác\"]. " +
+      "   (e.g., 'bánh mỳ', 'cafe' -> 'Ăn uống'; 'thuốc' -> 'Y tế'). " +
+      "4. Return strictly valid JSON array. No markdown.";
 
     var payload = {
       "contents": [{
