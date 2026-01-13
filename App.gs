@@ -133,111 +133,105 @@ function solveCaptchaOnHF(base64Image) {
 }
 
 function processDonations(txns) {
-  var props = PropertiesService.getScriptProperties();
-  var lastId = props.getProperty('LAST_VCB_TXN_ID') || "0";
-  
-  Logger.log("Probable Last ID: " + lastId);
-  
-  // Find the index of the last processed ID in the current list
-  // VCB List is usually [Newest, ..., Oldest]
-  var lastIdIndex = -1;
-  for (var k = 0; k < txns.length; k++) {
-      var tRef = txns[k].Reference || txns[k].reference;
-      if (tRef === lastId) {
-          lastIdIndex = k;
-          break;
+   withLock(function() {
+      var props = PropertiesService.getScriptProperties();
+      var lastId = props.getProperty('LAST_VCB_TXN_ID') || "0";
+      
+      Logger.log("Probable Last ID: " + lastId);
+      
+      // Find index of lastId in current txns
+      // txns is [Newest ... Oldest]
+      var stopIndex = -1;
+      
+      for (var i = 0; i < txns.length; i++) {
+        // Normalize ID from VCB response
+        var currentId = txns[i]['id'] || txns[i]['Reference'] || txns[i]['reference'];
+        
+        // Use loose equality or compareTxnId logic
+        if (compareTxnId(currentId, lastId) === 0 || 
+            String(currentId) === String(lastId)) {
+            stopIndex = i;
+            break;
+        }
       }
-  }
-  
-  Logger.log("Last ID found at index: " + lastIdIndex + " (List length: " + txns.length + ")");
-  
-  var newLastId = lastId;
-  var count = 0;
+      
+      Logger.log("Stop Index found at: " + stopIndex);
+      
+      var newTxns = [];
+      if (stopIndex === -1) {
+          // rare case: lastId not found. Assume all are new.
+          newTxns = txns; 
+      } else {
+          // Take all from 0 to stopIndex - 1
+          newTxns = txns.slice(0, stopIndex);
+      }
+      
+      // Process from Oldest to Newest to keep order
+      newTxns.reverse();
+      
+      var count = 0;
+      var newLastId = lastId;
 
-  // Iterate from oldest to newest (Reverse order of checking, but valid for processing)
-  // Logic: 
-  // - If lastIdIndex == -1 (Not found): Assume ALL are new (since we run every 10 mins).
-  // - If lastIdIndex > -1: Process only items with index < lastIdIndex (Newer items).
-  
-  for (var i = txns.length - 1; i >= 0; i--) {
-     // Skip if we found the lastId and this item is older or equal to it
-     if (lastIdIndex !== -1 && i >= lastIdIndex) {
-         continue;
-     }
+      for (var i = 0; i < newTxns.length; i++) {
+        var txn = newTxns[i];
+        if (!txn) continue;
+        
+        // Normalize Unknown VCB Keys (Reference/reference, Amount/amount, etc.)
+        var id = txn['id'] || txn['Reference'] || txn['reference'];
+        var dateStr = txn['date'] || txn['TransactionDate'] || txn['transactionDate'] || txn['tranDate']; 
+        var desc = txn['description'] || txn['Description'] || "";
+        var rawAmount = txn['amount'] || txn['Amount'] || "0";
+        var cd = txn['cd'] || txn['CD'] || txn['dorc']; 
 
-     var t = txns[i];
-     
-     // Normalize Keys
-     var ref = t.Reference || t.reference;
-     
-     // Update newLastId to the current ref (as we iterate Old -> New, the final value will be the newest)
-     newLastId = ref;
-     var rawAmount = t.Amount || t.amount || "0";
-     var desc = t.Description || t.description || "";
-     var dateStr = t.TransactionDate || t.transactionDate || t.tranDate; // "13/01/2026"
-     var cd = t.CD || t.dorc; // "+" or "C"
-     
-     Logger.log("Processing New Txn: " + ref);
-     
-     if (true) {
-        // Parse Amount
+        // Ensure Amount is parsed safely
         var amt = 0;
         if (typeof rawAmount === 'string') {
-            amt = parseFloat(rawAmount.replace(/,/g, ''));
+             amt = parseFloat(rawAmount.replace(/,/g, ''));
         } else {
-            amt = parseFloat(rawAmount);
+             amt = parseFloat(rawAmount);
         }
+
+        newLastId = id; // Update lastId pointer
         
-        // Parse Date "dd/MM/yyyy"
-        var txnDate = new Date();
-        if (dateStr && dateStr.includes('/')) {
-            var parts = dateStr.split('/');
-            // yyyy, mm-1, dd
-            txnDate = new Date(parts[2], parts[1] - 1, parts[0]);
-        }
-        
-        // --- NEW: Parse Time & Clean Description from VCB 24/7 Prefix ---
+        // --- PARSE TIME FROM DESC (VCB 24/7) ---
+        // Look for pattern like ...2026 123045 1234... -> 12:30:45
+        var extractedTime = null;
         var timeMatch = desc.match(/\d{4}(\d{6})\d{4}/); 
         if (timeMatch) {
-            var fullTime = timeMatch[1]; // 052849
-            var hh = parseInt(fullTime.substring(0, 2));
-            var mm = parseInt(fullTime.substring(2, 4));
-            var ss = parseInt(fullTime.substring(4, 6));
-            txnDate.setHours(hh, mm, ss);
+            extractedTime = timeMatch[1]; // HHmmss
         }
-        
-        // Clean Description: Remove technical prefix
+
+        // Clean Description: Remove technical prefix (VCB 24/7 often adds long numeric string)
         var cleanDesc = desc;
         if (desc.length > 30 && /^\d+/.test(desc)) { 
             var parts = desc.split('.');
             var startIndex = 0;
             for(var k=0; k<parts.length; k++) {
                 var p = parts[k];
+                // Skip part if it's purely number OR looks like ID/Trace number (long, no space)
                 if (/^\d+$/.test(p) || (p.length > 15 && !p.includes(' '))) {
                    startIndex++;
                 } else {
-                   break; // Found content
+                   break; // Found actual content
                 }
             }
             if (startIndex > 0 && startIndex < parts.length) {
                 cleanDesc = parts.slice(startIndex).join('.').trim();
             }
         }
+        
+        // Use cleaned description for logic
         desc = cleanDesc; 
-        
+
         // --- ID DETECTION LOGIC ---
-        // Priority:
-        // 1. "Donate <ID>"
-        // 2. "<ID> Donate"
-        // 3. Start with <ID> (9-15 digits)
-        
+
         var targetUserId = null;
         var msgContent = desc;
-        
+
         var m1 = desc.match(/Donate\s*(\d{9,15})/i);
         var m2 = desc.match(/(\d{9,15})\s*Donate/i);
         var m3 = desc.match(/^(\d{9,15})\b/); // ID at the start
-        
+
         if (m1) {
             targetUserId = m1[1];
             msgContent = desc.replace(m1[0], "").trim();
@@ -248,9 +242,6 @@ function processDonations(txns) {
             targetUserId = m3[1];
             msgContent = desc.replace(m3[0], "").trim();
         }
-        
-        // Detect generic "Donate" keyword (optional now since valid even without it)
-        // var hasDonateKeyword = /donate|ung ho|quyen gop/i.test(desc);
         
         var category = "Donate"; 
 
@@ -274,7 +265,6 @@ function processDonations(txns) {
         var sheetNote = displayName + ": " + msgContent;
 
         // --- SAVE TO SHEET ---
-        // VCB: CD = "+" or "C" (Credit/Incoming). "D" or "-" (Debit/Outgoing).
         // Only process Incoming.
         if (cd === '+' || cd === 'C' || (cd === undefined && amt > 0)) {
             try {
@@ -284,6 +274,22 @@ function processDonations(txns) {
                 if (!sheet) {
                   sheet = ss.insertSheet('Income');
                   sheet.appendRow(['STT', 'Thời gian', 'Số tiền', 'Hạng mục', 'Ghi chú', 'Người gửi']);
+                }
+                
+                // Get transaction Date Object for Sheet
+                var parts = dateStr.split(" ");
+                var dParts = parts[0].split("/");
+                var txnDate = new Date(dParts[2], dParts[1]-1, dParts[0]);
+                
+                // Set Time: Priority (Extracted from Desc > DateStr Time > 00:00:00)
+                if (extractedTime) {
+                    var hh = parseInt(extractedTime.substring(0, 2));
+                    var mm = parseInt(extractedTime.substring(2, 4));
+                    var ss = parseInt(extractedTime.substring(4, 6));
+                    txnDate.setHours(hh, mm, ss);
+                } else if (parts[1]) {
+                    var tParts = parts[1].split(":");
+                    txnDate.setHours(tParts[0], tParts[1], tParts[2]);
                 }
                 
                 sheet.appendRow([sheet.getLastRow(), txnDate, amt, category, sheetNote, displayName]);
@@ -323,14 +329,15 @@ function processDonations(txns) {
             
             count++;
         }
-     }
-  }
-  
-  if (count > 0) {
-    props.setProperty('LAST_VCB_TXN_ID', newLastId);
-    Logger.log("✅ Processed " + count + " new donations.");
-  }
+      } // end for
+
+      if (count > 0) {
+        props.setProperty('LAST_VCB_TXN_ID', newLastId);
+        Logger.log("✅ Processed " + count + " new donations.");
+      }
+   }); // End withLock
 }
+
 
 function compareTxnId(a, b) {
     if (!b) return 1;
@@ -342,6 +349,7 @@ function compareTxnId(a, b) {
     } catch(e){}
     return String(a).localeCompare(String(b));
 }
+
 
 // --- SETUP VCB TRIGGER ---
 function setupVCBTrigger() {

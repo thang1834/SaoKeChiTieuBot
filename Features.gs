@@ -1824,7 +1824,8 @@ function addExpenseDirect(cid, sheetId, amount, category, note, telegramId) {
       // Get Sender Name
       var sender = getSenderName(telegramId);
       
-      sheet.appendRow([new Date(), new Date(), amount, category, note, sender]);
+       var stt = sheet.getLastRow(); // STT is previous last row (which effectively becomes current count) or just use logic
+       sheet.appendRow([stt, new Date(), amount, category, note, sender]);
       checkBudgetAlert(cid, sheetId, amount, category, telegramId);
       
       // PHASE 17: Smart Alert
@@ -1895,5 +1896,62 @@ function addIncome(cid, sheetId, amount, note, telegramId) {
       sheet.appendRow([new Date(), new Date(), amount, "Khác", note, sender]); // Default cat Khác for now
    } catch (e) {
       Logger.log("Add Income Error: " + e);
+   }
+}
+// =============================================================================
+// AI / VOICE FEATURES
+// =============================================================================
+
+function handleVoiceMessage(cid, sheetId, fileId, telegramId) {
+   // Check if AI is configured
+   if (!CONFIG.GEMINI_API_KEY) {
+       sendText(cid, "🎤 **Tính năng AI Voice chưa được kích hoạt.**\n\n" +
+                     "Vui lòng cấu hình `GEMINI_API_KEY` trong Script Properties để sử dụng.\n" +
+                     "Hiện tại Bot chỉ nhận lệnh bằng tin nhắn văn bản (Text).");
+       return;
+   }
+
+   // Notify processing
+   sendText(cid, "🎧 Bot đang nghe và phân tích...");
+
+   try {
+       // Call AI module
+       var transactions = processVoiceWithGemini(fileId);
+       
+       if (!transactions || transactions.length === 0) {
+           sendText(cid, "⚠️ Không nghe rõ hoặc không tìm thấy thông tin chi tiêu nào.");
+           return;
+       }
+
+       var total = 0;
+       var count = 0;
+       
+       // Process each extracted transaction
+       for (var i = 0; i < transactions.length; i++) {
+           var t = transactions[i];
+           if (t.type === 'IN') {
+               addIncome(cid, sheetId, t.amount, t.note + " (Voice)", telegramId);
+               sendText(cid, "💰 **Đã lưu thu (Voice):** " + formatMoney(t.amount) + "\n📝 " + t.note);
+           } else {
+               // Default to Expense
+               // Reuse handleSaveExpense logic if possible, or direct save
+               var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
+               var cat = t.category || "Khác";
+               var note = t.note || "Voice Note";
+               var sender = getSenderName(telegramId);
+               
+               sheet.appendRow([new Date(), new Date(), t.amount, cat, note, sender]);
+               total += Number(t.amount);
+               count++;
+           }
+       }
+       
+       if (count > 0) {
+           sendText(cid, "✅ **Đã lưu " + count + " giao dịch chi tiêu!**\nSơ bộ: " + formatMoney(total));
+       }
+
+   } catch (e) {
+       Logger.log("Handle Voice Error: " + e);
+       sendText(cid, "❌ Lỗi khi xử lý giọng nói: " + e.message);
    }
 }

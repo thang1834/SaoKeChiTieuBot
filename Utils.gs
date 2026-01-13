@@ -58,6 +58,32 @@ function sendPhoto(cid, url, caption) {
 }
 
 /**
+ * Thực thi hàm với LockService để tránh race condition
+ * @param {Function} callback - Hàm cần chạy trong lock
+ * @param {number} timeout - Thời gian chờ lock (ms), mặc định 30s
+ */
+function withLock(callback, timeout) {
+   var lock = LockService.getScriptLock();
+   try {
+      // Create a lock with a timeout
+      // tryLock(timeoutInMillis)
+      // Returns true if lock acquired, false otherwise
+      var success = lock.tryLock(timeout || 30000);
+      if (!success) {
+         Logger.log("❌ Could not obtain lock after " + (timeout||30000) + "ms");
+         return null;
+      }
+      return callback();
+   } catch (e) {
+      Logger.log("withLock Error: " + e);
+      // Depending on need, re-throw or suppress
+      throw e; 
+   } finally {
+      lock.releaseLock();
+   }
+}
+
+/**
  * Gửi file (document) đến user (PDF, CSV...)
  * @param {string|number} cid - Chat ID
  * @param {Blob} fileBlob - File blob cần gửi

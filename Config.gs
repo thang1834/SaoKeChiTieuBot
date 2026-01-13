@@ -48,9 +48,13 @@ var CONFIG = {
   
   // --- HẠNG MỤC MẶC ĐỊNH ---
   // Sử dụng khi user chưa tạo custom categories
-  EXPENSE_CATEGORIES: ["Ăn uống", "Học tập", "Nhà cửa", "Y tế", "Giải trí", "Khác"],
+  EXPENSE_CATEGORIES: ["Ăn uống", "Học tập", "Nhà cửa", "Y tế", "Giải trí", "Cho vay", "Khác"],
   INCOME_CATEGORIES: ["Lương", "Thưởng", "Đầu tư", "Donate", "Khác"],
   
+  // --- AI INTEGRATION ---
+  // API Key cho Gemini (Google AI)
+  GEMINI_API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
+
   // --- MÀU BIỂU ĐỒ ---
   // Dùng cho QuickChart API
   CHART_COLORS: [

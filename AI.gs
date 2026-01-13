@@ -20,13 +20,13 @@ function parseTransactionWithAI(text) {
     "Return JSON array ONLY. Format: " +
     "[{ \"amount\": number, \"category\": string, \"note\": string, \"type\": \"OUT\"|\"IN\" }]. " +
     "Rules: " +
-    "1. Convert k/m/tr to numbers (50k=50000). " +
-    "2. Guess category from Vietnamese context (e.g. food->Ăn uống). " +
-    "3. Date is today unless specified. " +
-    "4. Type is usually OUT, only IN if receiving money/salary. " +
-    "5. Return strictly valid JSON array. No markdown.";
+    "1. Convert k/củ to numbers (50k=50000, 1 củ=1000000). " +
+    "2. Default type is OUT. Use IN only for salary/incoming money. " +
+    "3. Map category STRICTLY to one of: [\"Ăn uống\", \"Học tập\", \"Nhà cửa\", \"Y tế\", \"Giải trí\", \"Khác\", \"Lương\", \"Thưởng\", \"Cho vay\"]. " +
+    "   (e.g., 'bánh mỳ', 'cafe' -> 'Ăn uống'; 'thuốc' -> 'Y tế'). " +
+    "4. Return strictly valid JSON array. No markdown.";
 
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + apiKey;
   
   var payload = {
     "contents": [{
@@ -74,7 +74,10 @@ function processVoiceWithGemini(fileId) {
   try {
     var resp = UrlFetchApp.fetch(fileInfoUrl);
     var json = JSON.parse(resp.getContentText());
-    if (!json.ok) return null;
+    if (!json.ok) {
+        Logger.log("Telegram getFile Error: " + JSON.stringify(json));
+        return null;
+    }
     
     var filePath = json.result.file_path;
     var downloadUrl = "https://api.telegram.org/file/bot" + CONFIG.BOT_TOKEN + "/" + filePath;
@@ -82,15 +85,23 @@ function processVoiceWithGemini(fileId) {
     // 2. Download File Blob
     var blob = UrlFetchApp.fetch(downloadUrl).getBlob();
     var base64 = Utilities.base64Encode(blob.getBytes());
-    var mimeType = blob.getContentType(); // usually audio/ogg or audio/mpeg
+    var mimeType = blob.getContentType(); 
     
-    // 3. Send to Gemini 1.5 Flash
-    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+    // Fix: GAS sometimes returns application/octet-stream for OGG
+    if (mimeType === 'application/octet-stream' || !mimeType) {
+        mimeType = 'audio/ogg';
+    }
+    
+    // 3. Send to Gemini Flash Latest (Stable)
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + apiKey;
     
     var prompt = 
-      "Listen to this audio. It lists expenses. Extract them into JSON array: " +
+      "Listen to this audio (Vietnamese). It describes expenses. Extract them into JSON array: " +
       "[{ \"amount\": number, \"category\": string, \"note\": string, \"type\": \"OUT\"|\"IN\" }]. " +
-      "Rules: Guess category from context. Convert spoken numbers (50 nghìn -> 50000). Return ONLY JSON.";
+      "Rules: " +
+      "- Guess category from context (Food, Travel, etc). " +
+      "- Convert spoken numbers (50 nghìn -> 50000, 1 củ -> 1000000). " +
+      "- Return ONLY JSON. No markdown formatting.";
 
     var payload = {
       "contents": [{
@@ -113,18 +124,37 @@ function processVoiceWithGemini(fileId) {
       muteHttpExceptions: true
     });
     
-    var result = JSON.parse(response.getContentText());
+    var responseCode = response.getResponseCode();
+    var responseText = response.getContentText();
+    
+    if (responseCode !== 200) {
+        Logger.log("Gemini API Error (" + responseCode + "): " + responseText);
+        // Try to notify admin
+        try { sendText(CONFIG.ADMIN_CHAT_ID, "⚠️ Gemini Voice Error (" + responseCode + "):\n`" + responseText.substring(0, 500) + "`"); } catch(e){}
+        return null; 
+    }
+    
+    var result = JSON.parse(responseText);
     
     if (result.candidates && result.candidates.length > 0) {
       var rawText = result.candidates[0].content.parts[0].text;
+      // Clean up markdown code blocks if present
       rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      var transactions = JSON.parse(rawText);
-      return Array.isArray(transactions) ? transactions : [transactions];
+      
+      try {
+          var transactions = JSON.parse(rawText);
+          return Array.isArray(transactions) ? transactions : [transactions];
+      } catch (parseErr) {
+          Logger.log("Gemini Parse Error: " + parseErr + " | Raw: " + rawText);
+          return null;
+      }
+    } else {
+       Logger.log("Gemini No Candidates: " + responseText);
     }
     
   } catch (e) {
     Logger.log("Gemini Voice Error: " + e);
-    logErrorToAdmin(e, "processVoiceWithGemini");
+    // logErrorToAdmin(e, "processVoiceWithGemini");
   }
   return null;
 }
@@ -149,7 +179,7 @@ function checkUnusualSpendingAI(amount, category, note, stats) {
       "Strictly reply with JSON: { \"isUnusual\": boolean, \"message\": \"string\" }.\n" +
       "If isUnusual is true, message should be a short, funny, warning in Vietnamese (e.g. 'Tiêu gì mà lắm thế?'). If false, message is empty.";
 
-   var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
+   var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + apiKey;
    
    var payload = {
      "contents": [{ "parts": [{ "text": prompt }] }]

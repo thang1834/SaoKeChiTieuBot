@@ -22,42 +22,45 @@
  *   e.postData.contents chứa JSON từ Telegram
  */
 function doPost(e) {
-  try {
-    // Kiểm tra token đã cấu hình chưa
-    if (!CONFIG.BOT_TOKEN) return;
+  // Wrap entire processing in lock to prevent race conditions (commands vs background jobs)
+  withLock(function() {
+      try {
+        // Kiểm tra token đã cấu hình chưa
+        if (!CONFIG.BOT_TOKEN) return;
+        
+        // Parse JSON từ Telegram
+        var data = JSON.parse(e.postData.contents);
+        
+        // Lấy thông tin sender
+        var senderId = data.callback_query ? data.callback_query.from.id : data.message.from.id;
+        var senderName = data.callback_query ? data.callback_query.from.first_name : data.message.from.first_name;
     
-    // Parse JSON từ Telegram
-    var data = JSON.parse(e.postData.contents);
+        // Capture User Info (Auto-save to DB)
+        captureUser(senderId, senderName);
     
-    // Lấy thông tin sender
-    var senderId = data.callback_query ? data.callback_query.from.id : data.message.from.id;
-    var senderName = data.callback_query ? data.callback_query.from.first_name : data.message.from.first_name;
-
-    // Capture User Info (Auto-save to DB)
-    captureUser(senderId, senderName);
-
-    // Phân loại request
-    if (data.callback_query) { 
-      // User bấm inline button
-      handleCallbackQuery(data.callback_query); 
-      return; 
-    }
-    if (data.message) { 
-      if (data.message.text) {
-        handleMessage(data.message.text, senderId, senderName); 
-      } else if (data.message.voice) {
-        var userSheetId = getUserSheetId(senderId);
-        if (userSheetId) {
-           handleVoiceMessage(senderId, userSheetId, data.message.voice.file_id, senderId);
-        } else {
-           sendText(senderId, t('unauth', senderId));
+        // Phân loại request
+        if (data.callback_query) { 
+          // User bấm inline button
+          handleCallbackQuery(data.callback_query); 
+          return; 
         }
+        if (data.message) { 
+          if (data.message.text) {
+            handleMessage(data.message.text, senderId, senderName); 
+          } else if (data.message.voice) {
+            var userSheetId = getUserSheetId(senderId);
+            if (userSheetId) {
+               handleVoiceMessage(senderId, userSheetId, data.message.voice.file_id, senderId);
+            } else {
+               sendText(senderId, t('unauth', senderId));
+            }
+          }
+        }
+      } catch (err) { 
+        Logger.log("doPost Error: " + err); 
+        logErrorToAdmin(err, "doPost");
       }
-    }
-  } catch (err) { 
-    Logger.log("doPost Error: " + err); 
-    logErrorToAdmin(err, "doPost");
-  }
+  }); // End withLock
 }
 
 // =============================================================================
