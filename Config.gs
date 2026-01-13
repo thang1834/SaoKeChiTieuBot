@@ -234,7 +234,6 @@ var TEXT = {
              "- Send Voice Note: 'Breakfast 50k'\n" +
              "- AI (Gemini Flash) will parse it."
   }
-  }
 };
 
 // =============================================================================

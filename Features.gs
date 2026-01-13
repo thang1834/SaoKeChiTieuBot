@@ -1524,6 +1524,13 @@ function listDebt(cid, sheetId, telegramId) {
      if (!hasDebt) {
         sendText(cid, "🎉 Không còn khoản nợ nào đang Active!");
      } else {
+        msg += "👇 Bấm nút để thanh toán nhanh hoặc dùng lệnh `/debt repay [ID] [số tiền]`.\n";
+        sendMessageKb(cid, msg, {inline_keyboard: kb});
+     }
+     
+   } catch(e) {
+     sendText(cid, "❌ Lỗi: " + e.message);
+   }
 }
 
 function repayDebt(cid, sheetId, id, amount, telegramId) {
@@ -1649,9 +1656,6 @@ function exportPdf(cid, sheetId, telegramId) {
      sendText(cid, "❌ Lỗi xuất PDF: " + e.message);
   }
 }
-     sendText(cid, "❌ Lỗi xuất PDF: " + e.message);
-  }
-}
 
 // =============================================================================
 // PHASE 14: AI INTEGRATION
@@ -1718,9 +1722,65 @@ function addExpenseDirect(cid, sheetId, amount, category, note, telegramId) {
       
       sheet.appendRow([new Date(), new Date(), amount, category, note, sender]);
       checkBudgetAlert(cid, sheetId, amount, category, telegramId);
+      
+      // PHASE 17: Smart Alert
+      try {
+         var stats = getCategoryStats(sheetId, category);
+         // Alert if amount > 2x average AND we have some history (>3 items)
+         if (stats.count >= 3 && amount > stats.avg * 2) {
+            var aiAlert = checkUnusualSpendingAI(amount, category, note, stats);
+            if (aiAlert) {
+               sendText(cid, aiAlert);
+            }
+         }
+      } catch (e) {
+         Logger.log("Smart Alert Error: " + e);
+      }
+      
    } catch (e) {
       Logger.log("Add Expense Direct Error: " + e);
    }
+}
+
+/**
+ * Calculate stats for a category over the last 30 days
+ * @returns {object} { avg: number, count: number, history: [] }
+ */
+function getCategoryStats(sheetId, category) {
+  var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
+  var data = sheet.getDataRange().getValues();
+  
+  var now = new Date();
+  var thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  var total = 0;
+  var count = 0;
+  var history = [];
+  
+  // Iterate backwards to get recent history
+  // Data structure: [Date, Date, Amount, Category, Note, Sender]
+  // Row headers are row 0, data starts row 1
+  for (var i = data.length - 1; i >= 1; i--) {
+    var row = data[i];
+    var rowDate = new Date(row[1]);
+    var rowCat = String(row[3]).toLowerCase();
+    var targetCat = String(category).toLowerCase();
+    
+    if (rowDate < thirtyDaysAgo) break; // Optimization: Stop if older than 30 days (assuming sorted by date)
+    
+    // Simple containment check for category matching (flexible)
+    if (rowCat.includes(targetCat) || targetCat.includes(rowCat)) {
+       var amt = Number(row[2]);
+       total += amt;
+       count++;
+       if (history.length < 5) {
+          history.push({ date: Utilities.formatDate(rowDate, "GMT+7", "dd/MM"), amount: formatMoney(amt), note: row[4] });
+       }
+    }
+  }
+  
+  var avg = count > 0 ? (total / count) : 0;
+  return { avg: avg, count: count, history: history.reverse() };
 }
 
 function addIncome(cid, sheetId, amount, note, telegramId) {

@@ -128,3 +128,54 @@ function processVoiceWithGemini(fileId) {
   }
   return null;
 }
+
+/**
+ * Analyze unusual spending
+ * @returns {string|null} Warning message or null
+ */
+function checkUnusualSpendingAI(amount, category, note, stats) {
+   var apiKey = CONFIG.GEMINI_API_KEY;
+   if (!apiKey) return null;
+   
+   var historyStr = stats.history.map(function(h) { return h.date + ": " + h.amount; }).join(", ");
+   
+   var prompt = 
+      "You are a witty financial assistant. Analyze this expense:\n" +
+      "- Amount: " + amount + "\n" +
+      "- Category: " + category + " (" + note + ")\n" +
+      "- User's Avg for this cat: " + Math.round(stats.avg) + "\n" +
+      "- Recent History: " + historyStr + "\n\n" +
+      "Is this expense unusually high (significant outlier)? \n" +
+      "Strictly reply with JSON: { \"isUnusual\": boolean, \"message\": \"string\" }.\n" +
+      "If isUnusual is true, message should be a short, funny, warning in Vietnamese (e.g. 'Tiêu gì mà lắm thế?'). If false, message is empty.";
+
+   var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
+   
+   var payload = {
+     "contents": [{ "parts": [{ "text": prompt }] }]
+   };
+   
+   try {
+     var response = UrlFetchApp.fetch(url, {
+       method: "post",
+       payload: JSON.stringify(payload),
+       contentType: "application/json",
+       muteHttpExceptions: true
+     });
+     
+     var json = JSON.parse(response.getContentText());
+     if (json.candidates && json.candidates.length > 0) {
+        var rawText = json.candidates[0].content.parts[0].text;
+        // Clean markdown
+        rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        var result = JSON.parse(rawText);
+        
+        if (result.isUnusual) {
+           return "⚠️ **Smart Alert**: " + result.message;
+        }
+     }
+   } catch (e) {
+     Logger.log("AI Alert Error: " + e);
+   }
+   return null;
+}
