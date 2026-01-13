@@ -119,6 +119,12 @@ function handleMessage(text, senderId, senderName) {
     return; 
   }
   
+  // /settings - Menu cài đặt
+  if (text === "/settings") {
+    sendSettingsMenu(senderId, senderId);
+    return;
+  }
+  
   // /connect [SheetID] - Kết nối Google Sheet
   if (text.startsWith("/connect ")) {
     var rawId = text.replace("/connect ", "").trim();
@@ -424,6 +430,14 @@ function handleCallbackQuery(cb) {
   // goal_dep|ID - Nạp tiền mục tiêu
   else if (data.startsWith("goal_dep|")) {
     handleGoalCallback(senderId, data, userSheetId, senderId);
+  }
+  // goal_dep|ID - Nạp tiền mục tiêu
+  else if (data.startsWith("goal_dep|")) {
+    handleGoalCallback(senderId, data, userSheetId, senderId);
+  }
+  // Settings callbacks
+  else if (data.startsWith("set_")) {
+    handleSettingsCallback(senderId, msgId, data, senderId);
   }
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
