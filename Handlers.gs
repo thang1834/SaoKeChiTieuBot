@@ -510,6 +510,7 @@ function setupCommands() {
     {command: "recurring", description: "🔄 Chi định kỳ"},
     {command: "split", description: "🍰 Chia tiền"},
     {command: "goal", description: "🏆 Mục tiêu"},
+    {command: "debt", description: "📒 Sổ nợ"},
     {command: "filter", description: "🔍 Lọc"},
     {command: "export", description: "📤 Xuất file"},
     {command: "remind", description: "⏰ Nhắc nhở"},
