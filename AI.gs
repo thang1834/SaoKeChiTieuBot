@@ -1,0 +1,61 @@
+/**
+ * AI.gs
+ * Tương tác với Google Gemini API để xử lý ngôn ngữ tự nhiên
+ */
+
+/**
+ * Gọi Gemini API để phân tích văn bản
+ * @param {string} text - Tin nhắn của người dùng (VD: "Nay đi chợ mua rau 50k, thịt 100k")
+ * @returns {Array} Danh sách các giao dịch đã parse [{amount, category, note, type}]
+ */
+function parseTransactionWithAI(text) {
+  var apiKey = CONFIG.GEMINI_API_KEY;
+  if (!apiKey) {
+    Logger.log("Missing GEMINI_API_KEY");
+    return null;
+  }
+
+  var prompt = 
+    "You are a finance assistant. Extract transaction data from this text: '" + text + "'. " +
+    "Return JSON array ONLY. Format: " +
+    "[{ \"amount\": number, \"category\": string, \"note\": string, \"type\": \"OUT\"|\"IN\" }]. " +
+    "Rules: " +
+    "1. Convert k/m/tr to numbers (50k=50000). " +
+    "2. Guess category from Vietnamese context (e.g. food->Ăn uống). " +
+    "3. Date is today unless specified. " +
+    "4. Type is usually OUT, only IN if receiving money/salary. " +
+    "5. Return strictly valid JSON array. No markdown.";
+
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey;
+  
+  var payload = {
+    "contents": [{
+      "parts": [{
+        "text": prompt
+      }]
+    }]
+  };
+
+  try {
+    var response = UrlFetchApp.fetch(url, {
+      method: "post",
+      payload: JSON.stringify(payload),
+      contentType: "application/json",
+      muteHttpExceptions: true
+    });
+    
+    var json = JSON.parse(response.getContentText());
+    
+    if (json.candidates && json.candidates.length > 0) {
+      var rawText = json.candidates[0].content.parts[0].text;
+      // Clean up markdown code blocks if present
+      rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      var transactions = JSON.parse(rawText);
+      return Array.isArray(transactions) ? transactions : [transactions];
+    }
+  } catch (e) {
+    Logger.log("Gemini API Error: " + e);
+  }
+  return null;
+}

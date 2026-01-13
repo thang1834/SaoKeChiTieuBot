@@ -1593,3 +1593,87 @@ function exportPdf(cid, sheetId, telegramId) {
      sendText(cid, "❌ Lỗi xuất PDF: " + e.message);
   }
 }
+     sendText(cid, "❌ Lỗi xuất PDF: " + e.message);
+  }
+}
+
+// =============================================================================
+// PHASE 14: AI INTEGRATION
+// =============================================================================
+
+function handleSmartMessage(cid, sheetId, text, telegramId) {
+  // Check if API Key is set
+  if (!CONFIG.GEMINI_API_KEY) {
+     sendText(cid, "⚠️ Bạn nhập sai cú pháp (hoặc API Key AI chưa được cấu hình).\nCú pháp chuẩn: `[số tiền] [nội dung]`\nVD: `50k cafe`");
+     return;
+  }
+  
+  sendText(cid, "🤖 Đang phân tích...");
+  var transactions = parseTransactionWithAI(text);
+  
+  if (!transactions || transactions.length === 0) {
+     sendText(cid, "❌ AI không hiểu ý bạn. Vui lòng nhập đúng cú pháp: `50k cafe`");
+     return;
+  }
+  
+  var msg = "🤖 **AI Đã tìm thấy " + transactions.length + " giao dịch:**\n\n";
+  
+  transactions.forEach(function(tx) {
+    var amt = Number(tx.amount);
+    var note = tx.note || tx.category;
+    var type = tx.type || 'OUT';
+    
+    // Save to Sheet
+    if (type === 'IN') {
+       // Handle Income
+       if (amt > 0) {
+          addIncome(cid, sheetId, amt, note, telegramId); 
+          msg += "💰 Thu: " + formatMoney(amt) + " (" + note + ")\n";
+       }
+    } else {
+       // Handle Expense
+       if (amt > 0) {
+          // If category is provided by AI, use it. If "Khác" or empty, maybe map?
+          // For simplicity, treat AI category as the category.
+          // Note: addExpense function usually requires category. 
+          // We need a way to add expense directly or handle category.
+          // existing handleSaveExpense uses Cache to store pending expense.
+          // Let's create `addExpenseDirectly` or reuse `handleSaveExpense` logic but without interactivity if possible.
+          // Currently `handleExpenseMessage` asks for category if not found.
+          // AI gives us category. So let's write to sheet directly.
+          
+          addExpenseDirect(cid, sheetId, amt, tx.category, note, telegramId);
+          msg += "💸 Chi: " + formatMoney(amt) + " - " + tx.category + " (" + note + ")\n";
+       }
+    }
+  });
+  
+  sendText(cid, msg + "\n✅ Đã lưu tất cả!");
+}
+
+function addExpenseDirect(cid, sheetId, amount, category, note, telegramId) {
+   // Logic similar to handleSaveExpense but synchronous
+   try {
+      var sheet = getOrCreateSheetForUser(sheetId, 'Expense');
+      var cats = getCategories(sheetId, 'expense');
+      
+      // Auto-add category if not exists? Or default to 'Khác'? 
+      // Let's default to AI's suggestion, effectively auto-adding it to history/list but maybe not to "Configured Categories" list unless requested.
+      // Actually, just saving string is fine.
+      
+      sheet.appendRow([new Date(), new Date(), amount, category, note]);
+      checkBudgetAlert(cid, sheetId, amount, category, telegramId);
+   } catch (e) {
+      Logger.log("Add Expense Direct Error: " + e);
+   }
+}
+
+function addIncome(cid, sheetId, amount, note, telegramId) {
+   // Logic for Income
+   try {
+      var sheet = getOrCreateSheetForUser(sheetId, 'Income');
+      sheet.appendRow([new Date(), new Date(), amount, "Khác", note]); // Default cat Khác for now
+   } catch (e) {
+      Logger.log("Add Income Error: " + e);
+   }
+}

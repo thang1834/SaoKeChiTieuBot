@@ -282,7 +282,15 @@ function handleMessage(text, senderId, senderName) {
   
   // Nếu không phải lệnh, thử parse như chi tiêu
   // VD: "50k cafe", "200k tiền điện"
-  handleExpenseMessage(senderId, userSheetId, text, senderId);
+  
+  // Try standard parsing first
+  var parsed = parseAmount(text.split(" ")[0]); 
+  if (parsed) {
+     handleExpenseMessage(senderId, userSheetId, text, senderId);
+  } else {
+     // If not matching standard format "50k item", try AI
+     handleSmartMessage(senderId, userSheetId, text, senderId);
+  }
 }
 
 // =============================================================================

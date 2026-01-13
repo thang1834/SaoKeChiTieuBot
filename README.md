@@ -137,7 +137,13 @@
 | Lệnh | Mô tả |
 |------|-------|
 | `/lang` | Đổi ngôn ngữ (VI/EN) |
+| `/lang` | Đổi ngôn ngữ (VI/EN) |
 | `/donate` | Ủng hộ tác giả (QR VietQR) |
+
+### 🤖 AI Integration (Mới)
+- Bot tự động hiểu ngôn ngữ tự nhiên nếu bạn không nhập đúng cú pháp chuẩn.
+- VD: "Vừa ăn phở 50k với uống cafe 30k" -> AI tự tách thành 2 giao dịch.
+- Cấu hình: Cần có `GEMINI_API_KEY` trong Script Properties.
 
 ---
 
@@ -173,8 +179,6 @@
 
 - [ ] **AI Integration** (Google Gemini/OpenAI): Smarter parsing.
 - [ ] **Voice Input**: Speech-to-text for transactions.
-- [ ] **Debt Tracking** (Sổ Nợ): Manage loans and debts.
-- [ ] **Web Dashboard**: Visual analytics.
 
 ---
 
