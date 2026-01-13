@@ -1464,50 +1464,41 @@ function addDebt(cid, sheetId, type, amount, person, note, telegramId) {
   }
 }
 
+// LIST DEBT
 function listDebt(cid, sheetId, telegramId) {
-  try {
+   try {
      var sheet = getOrCreateSheetForUser(sheetId, 'Debt');
-     var data = sheet.getDataRange().getValues();
-     
-     if (data.length <= 1) {
-       sendText(cid, "✨ Bạn không có khoản nợ nào!");
-       return;
+     if (sheet.getLastRow() <= 1) {
+        sendText(cid, "📭 Sổ nợ trống.\nThêm: `/debt borrow 500k Name` hoặc `/debt lend 500k Name`");
+        return;
      }
      
+     var data = sheet.getDataRange().getValues();
      var msg = "📒 **SỔ NỢ (Active)**\n\n";
-     var found = false;
+     var kb = [];
+     var hasDebt = false;
      
      for (var i = 1; i < data.length; i++) {
-        // Status = Active (Col 7 / Index 6)
-        if (data[i][6] === 'Active') {
-           found = true;
-           var type = data[i][2]; // BORROW / LEND
-           var person = data[i][3];
-           var total = Number(data[i][4]);
-           var paid = Number(data[i][5]);
-           var remain = total - paid;
-           var note = data[i][7];
+        var r = data[i];
+        if (r[6] === 'Active') { // Status
+           hasDebt = true;
+           var typeIcon = (r[2] === 'BORROW') ? '🔴 vay' : '🔵 cho vay'; // Corrected type check
+           var remain = Number(r[4]) - Number(r[5]); // Amount - Paid
            
-           var icon = (type === 'BORROW') ? "📉 (Nợ)" : "📈 (Cho vay)";
-           
-           msg += "#" + data[i][0] + " " + icon + " **" + person + "**\n";
-           msg += "   💰 Còn: " + formatMoney(remain) + " / " + formatMoney(total) + "\n";
-           if (note) msg += "   📝 " + note + "\n";
+           msg += "#" + r[0] + " " + typeIcon + " **" + r[3] + "**\n";
+           msg += "💰 Còn: " + formatMoney(remain) + " (Tổng: " + formatMoney(r[4]) + ")\n";
+           if(r[7]) msg += "📝 " + r[7] + "\n";
            msg += "\n";
+           
+           // Add Repay Button
+           // Callback: debt_repay|ID
+           kb.push([{text: "💸 Trả hết #" + r[0] + " (" + formatMoney(remain) + ")", callback_data: "debt_repay|" + r[0]}]);
         }
      }
      
-     if (!found) {
-        sendText(cid, "✨ Tuyệt vời! Bạn đã sạch nợ (Hoặc đã thu hết nợ).");
+     if (!hasDebt) {
+        sendText(cid, "🎉 Không còn khoản nợ nào đang Active!");
      } else {
-        msg += "👉 Trả nợ: `/debt repay [ID] [số tiền]`";
-        sendText(cid, msg);
-     }
-     
-  } catch (e) {
-     Logger.log("List Debt Error: " + e);
-     sendText(cid, "❌ Lỗi: " + e.message);
-  }
 }
 
 function repayDebt(cid, sheetId, id, amount, telegramId) {

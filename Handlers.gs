@@ -391,7 +391,11 @@ function handleCallbackQuery(cb) {
   // rec_del|ID - Xóa định kỳ
   else if (data.startsWith("rec_del|")) {
     handleRecurringCallback(senderId, data, userSheetId, senderId);
-  } 
+  }
+  // debt_repay|ID - Trả nợ
+  else if (data.startsWith("debt_repay|")) {
+    handleDebtCallback(senderId, data, userSheetId, senderId);
+  }
   // Mặc định: category|amount|note - Lưu chi tiêu
   else {
     handleSaveExpense(senderId, userSheetId, cb, senderId);
