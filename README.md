@@ -26,8 +26,12 @@
 
 ### 🏦 VCB Integration
 - Tự động theo dõi biến động số dư
-- Thông báo donate qua Telegram
+- Thông báo donate qua Telegram (kèm lời cảm ơn tự động)
 - Mã hóa AES-256 + RSA
+
+### 🍰 Chia Tiền & Mục Tiêu
+- **Split Bill**: Tính tiền nhóm nhanh chóng
+- **Savings Goals**: Theo dõi mục tiêu tiết kiệm
 
 ---
 
@@ -90,6 +94,18 @@
 | `/recurring` | Xem danh sách chi định kỳ |
 | `/recurring add 2m tiền nhà monthly 1` | Thêm (monthly/weekly, ngày) |
 | `/recurring del [ID]` | Xóa chi tiêu định kỳ |
+
+### 🍰 Chia Tiền
+| Lệnh | Mô tả |
+|------|-------|
+| `/split 500k 4 ăn tối` | Chia đều 500k cho 4 người |
+
+### 🏆 Mục Tiêu Tiết Kiệm
+| Lệnh | Mô tả |
+|------|-------|
+| `/goal list` | Xem danh sách mục tiêu |
+| `/goal add 50m Xe 12/2025` | Tạo mục tiêu mới |
+| `/goal deposit [ID] [số]` | Nạp tiền vào mục tiêu |
 
 ### ⏰ Nhắc Nhở
 | Lệnh | Mô tả |

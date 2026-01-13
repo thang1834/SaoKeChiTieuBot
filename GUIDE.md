@@ -77,6 +77,25 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 /recurring del 1          → Xóa theo ID
 ```
 
+### 🍰 Chia Tiền
+```
+/split 500k 4 ăn lẩu      → Chia 500k cho 4 người
+                          → Bot tính hộ: 125k/người
+                          → Tạo tin nhắn mẫu để copy
+```
+
+### 🏆 Mục Tiêu Tiết Kiệm
+```
+# Tạo mục tiêu
+/goal add 50m Xe 12/2026  → Mục tiêu 50 triệu mua xe
+
+# Xem danh sách
+/goal list                → Xem tiến độ %
+
+# Nạp tiền
+/goal deposit [ID] 2m     → Nạp 2 triệu vào mục tiêu [ID]
+```
+
 ### ⏰ Nhắc Nhở
 ```
 /remind 21:00             → Đặt nhắc nhở hàng ngày
@@ -112,6 +131,13 @@ Chào mừng bạn đến với **SaoKeChiTieuBot**! Bot miễn phí giúp quả
 ```
 /recurring add 5m tiền nhà monthly 1
                           → Mỗi ngày 1 hàng tháng tự động thêm
+```
+
+### Tiết kiệm mua xe
+```
+/goal add 100m Camry 2026
+/goal deposit <ID> 5m     → Mỗi tháng nạp 5m vào quỹ
+/goal list                → Ngắm thanh tiến độ chạy dần lên 100% 🤩
 ```
 
 ---
